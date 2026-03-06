@@ -18,6 +18,7 @@ import { Route as publicLayoutRouteImport } from './routes/(public)/_layout'
 import { Route as authLayoutRouteImport } from './routes/(auth)/_layout'
 import { Route as publicLayoutIndexRouteImport } from './routes/(public)/_layout/index'
 import { Route as AuthenticatedAdminCountriesRouteImport } from './routes/_authenticated/_admin/countries'
+import { Route as AuthenticatedAdminCitiesRouteImport } from './routes/_authenticated/_admin/cities'
 import { Route as authLayoutLoginRouteImport } from './routes/(auth)/_layout/login'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -63,6 +64,12 @@ const AuthenticatedAdminCountriesRoute =
     path: '/countries',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCitiesRoute =
+  AuthenticatedAdminCitiesRouteImport.update({
+    id: '/cities',
+    path: '/cities',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const authLayoutLoginRoute = authLayoutLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -74,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/login': typeof authLayoutLoginRoute
+  '/cities': typeof AuthenticatedAdminCitiesRoute
   '/countries': typeof AuthenticatedAdminCountriesRoute
   '/': typeof publicLayoutIndexRoute
 }
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/login': typeof authLayoutLoginRoute
+  '/cities': typeof AuthenticatedAdminCitiesRoute
   '/countries': typeof AuthenticatedAdminCountriesRoute
   '/': typeof publicLayoutIndexRoute
 }
@@ -95,6 +104,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/(auth)/_layout/login': typeof authLayoutLoginRoute
+  '/_authenticated/_admin/cities': typeof AuthenticatedAdminCitiesRoute
   '/_authenticated/_admin/countries': typeof AuthenticatedAdminCountriesRoute
   '/(public)/_layout/': typeof publicLayoutIndexRoute
 }
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/unauthorized'
     | '/login'
+    | '/cities'
     | '/countries'
     | '/'
   fileRoutesByTo: FileRoutesByTo
@@ -113,6 +124,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/unauthorized'
     | '/login'
+    | '/cities'
     | '/countries'
     | '/'
   id:
@@ -125,6 +137,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/unauthorized'
     | '/(auth)/_layout/login'
+    | '/_authenticated/_admin/cities'
     | '/_authenticated/_admin/countries'
     | '/(public)/_layout/'
   fileRoutesById: FileRoutesById
@@ -200,6 +213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCountriesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/cities': {
+      id: '/_authenticated/_admin/cities'
+      path: '/cities'
+      fullPath: '/cities'
+      preLoaderRoute: typeof AuthenticatedAdminCitiesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/(auth)/_layout/login': {
       id: '/(auth)/_layout/login'
       path: '/login'
@@ -211,10 +231,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminCitiesRoute: typeof AuthenticatedAdminCitiesRoute
   AuthenticatedAdminCountriesRoute: typeof AuthenticatedAdminCountriesRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminCitiesRoute: AuthenticatedAdminCitiesRoute,
   AuthenticatedAdminCountriesRoute: AuthenticatedAdminCountriesRoute,
 }
 

@@ -13,6 +13,9 @@ export const Route = createFileRoute('/_authenticated/_admin/countries')({
 function RouteComponent() {
   const queryClient = useQueryClient()
 
+   useEffect(() => {
+    setMetaTitle('Country', 'Manage Country')
+  }, [])
   const { mutate: createCountry } = useMutation({
     mutationFn: (payload: CreateCountryDTO) => createCountryService(payload),
     onSuccess() {
@@ -23,9 +26,7 @@ function RouteComponent() {
       console.error('Failed to create country', error)
     },
   })
-  useEffect(() => {
-    setMetaTitle('Country', 'Manage Country')
-  }, [])
+ 
   const handleAddNewCountry = useCallback((payload: CreateCountryDTO) => {
     createCountry(payload)
   }, [createCountry])

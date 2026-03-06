@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getSidebarOpen, subscribeSidebar, updateSidebarItem } from '@/state/sidebarAtom'
+import { getSidebarOpen, subscribeSidebar, updateSidebarItem, setSidebarOpen } from '@/state/sidebarAtom'
 import {
   Sidebar,
   SidebarContent,
@@ -41,8 +41,7 @@ const menuItems: Array<{
     icon: MapPin,
     children: [
       { title: 'Countries', url: '/countries' },
-      { title: 'States', url: '/locations/states' },
-      { title: 'Cities', url: '/locations/cities' },
+      { title: 'Cities', url: '/cities' },
     ],
   },
   {
@@ -72,6 +71,65 @@ export function AppSidebar() {
   const { state } = useSidebar()
   const isCollapsed = state === 'collapsed'
   const [openItems, setOpenItems] = useState<Record<string, boolean>>(getSidebarOpen())
+  const normalizePath = (p?: string) => {
+    if (!p) return '/'
+    if (p === '/') return p
+    return p.replace(/\/+$/, '') || '/'
+  }
+  const [currentPath, setCurrentPath] = useState<string>(normalizePath(window.location.pathname))
+
+  // Open menu parents that match the current path (and keep atom in sync)
+  useEffect(() => {
+    const openForPath = (pathname = window.location.pathname) => {
+      const normalized = normalizePath(pathname)
+      setCurrentPath(normalized)
+      const current = getSidebarOpen()
+      const next: Record<string, boolean> = { ...current }
+
+      menuItems.forEach((item) => {
+        if (item.children) {
+          const matches = item.children.some((c) => {
+            if (!c.url) return false
+            const u = normalizePath(c.url)
+            return normalized === u || normalized.startsWith(u + '/') || normalized.startsWith(u)
+          })
+          if (matches) next[item.title] = true
+        }
+      })
+
+      setOpenItems(next)
+      setSidebarOpen(next)
+    }
+
+    openForPath()
+
+    const onLocationChange = () => openForPath()
+
+    // dispatch a custom event on history changes so we can react to router navigations
+    if (!(window as any).__sidebar_history_patched) {
+      const _push = history.pushState
+      const _replace = history.replaceState
+      history.pushState = function (...args: any[]) {
+        const result = _push.apply(this, args as any)
+        window.dispatchEvent(new Event('locationchange'))
+        return result
+      }
+      history.replaceState = function (...args: any[]) {
+        const result = _replace.apply(this, args as any)
+        window.dispatchEvent(new Event('locationchange'))
+        return result
+      }
+      ;(window as any).__sidebar_history_patched = true
+    }
+
+    window.addEventListener('popstate', onLocationChange)
+    window.addEventListener('locationchange', onLocationChange)
+
+    return () => {
+      window.removeEventListener('popstate', onLocationChange)
+      window.removeEventListener('locationchange', onLocationChange)
+    }
+  }, [])
 
   const toggleItem = (title: string) => {
     updateSidebarItem(title)
@@ -112,7 +170,18 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   {item.children ? (
                     <React.Fragment>
-                      <SidebarMenuButton tooltip={item.title} onClick={() => toggleItem(item.title)}>
+                      {/** Parent button: active if any child matches currentPath */}
+                      <SidebarMenuButton
+                        tooltip={item.title}
+                        onClick={() => toggleItem(item.title)}
+                        isActive={
+                          item.children?.some((c) => {
+                            if (!c.url) return false
+                            const u = normalizePath(c.url)
+                            return currentPath === u || currentPath.startsWith(u + '/') || currentPath.startsWith(u)
+                          })
+                        }
+                      >
                         <div className="flex items-center gap-2">
                           <item.icon />
                           {!isCollapsed && <span>{item.title}</span>}
@@ -129,7 +198,18 @@ export function AppSidebar() {
                           <SidebarMenu>
                           {item.children.map((child) => (
                             <SidebarMenuItem key={child.title}>
-                              <SidebarMenuButton asChild tooltip={child.title}>
+                              <SidebarMenuButton
+                                asChild
+                                tooltip={child.title}
+                                isActive={
+                                  child.url
+                                    ? ((): boolean => {
+                                        const u = normalizePath(child.url as string)
+                                        return currentPath === u || currentPath.startsWith(u + '/') || currentPath.startsWith(u)
+                                      })()
+                                    : false
+                                }
+                              >
                                 <Link to={child.url}>
                                   <span className="text-sm">{child.title}</span>
                                 </Link>

@@ -10,7 +10,7 @@ export const CountryHeader: React.FC<{
   onAddNewCountry,
 }) => {
   const [openNewCountryModal, setOpenNewCountryModal] = useState(false)
-  const [form, setForm] = useState<CreateCountryDTO>({ name: '', code: '', dialCode: '' })
+  const [form, setForm] = useState<CreateCountryDTO>({ name: '', code: '', dial_code: '' })
 
   const handleChange = (field: keyof CreateCountryDTO, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -19,7 +19,7 @@ export const CountryHeader: React.FC<{
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onAddNewCountry(form)
-    setForm({ name: '', code: '', dialCode: '' })
+    setForm({ name: '', code: '', dial_code: '' })
     setOpenNewCountryModal(false)
   }
 
@@ -40,7 +40,7 @@ export const CountryHeader: React.FC<{
 
           <Button
             size="sm"
-            className="gap-2 shadow-sm"
+            className="gap-2 shadow-sm cursor-pointer"
             onClick={() => setOpenNewCountryModal(true)}
           >
             <Plus className="w-4 h-4" />
@@ -59,7 +59,7 @@ export const CountryHeader: React.FC<{
             {/* Close Icon */}
             <button
               onClick={() => setOpenNewCountryModal(false)}
-              className="absolute right-4 top-4 text-gray-500 hover:text-black"
+              className="absolute right-4 top-4 text-gray-500 hover:text-black cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -93,8 +93,8 @@ export const CountryHeader: React.FC<{
                 <label className="text-sm font-medium">Dial Code</label>
                 <Input
                   placeholder="91"
-                  value={form.dialCode}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('dialCode', e.target.value)}
+                  value={form.dial_code}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('dial_code', e.target.value)}
                 />
               </div>
 
@@ -104,12 +104,13 @@ export const CountryHeader: React.FC<{
                 <Button
                   type="button"
                   variant="outline"
+                  className="cursor-pointer"
                   onClick={() => setOpenNewCountryModal(false)}
                 >
                   Cancel
                 </Button>
 
-                <Button type="submit">
+                <Button type="submit" className="cursor-pointer">
                   Save Country
                 </Button>
 

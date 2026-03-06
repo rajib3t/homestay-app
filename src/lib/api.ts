@@ -3,7 +3,6 @@ import axios from 'axios'
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import { env } from './env'
 import { jwtDecode } from 'jwt-decode'
-import type { AuthToken } from '../types/auth/token'
 import type { ApiResponse } from '@/types/common'
 
 /* -------------------------------------------------------------------------- */
@@ -18,6 +17,11 @@ export interface ApiError {
   message: string
   status: number
   code?: string
+}
+
+export interface RefreshTokenResponse {
+  access_token: string
+  refresh_token?: string
 }
 
 interface ErrorResponse {
@@ -164,7 +168,7 @@ class ApiClient {
       }
 
       const newToken = await this.refreshPromise
-      
+
       // Update the failed request with new token
       if (!originalRequest.headers) {
         originalRequest.headers = {}
@@ -187,21 +191,21 @@ class ApiClient {
 
   private async refreshAccessToken(refreshToken: string): Promise<string> {
     try {
-      // Call refresh endpoint without going through interceptors to avoid loops
-      const response = await axios.post(
-        `${env.getApiUrl()}${REFRESH_ENDPOINT}`,
-        { refresh_token: refreshToken },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
-        }
+      // Use publicApi to ensure correct baseURL, headers, and withCredentials
+      const response = await this.publicApi.post<RefreshTokenResponse>(
+        REFRESH_ENDPOINT,
+        { refresh_token: refreshToken }
       )
 
-      // Parse the nested response structure
-      const newAccessToken = response.data?.data?.access_token
-      const newRefreshToken = response.data?.data?.refresh_token
+      // The response is wrapped in { success, data } by this.wrap() or directly from axios if using publicApi
+      // But wait, this.publicApi.post calls this.wrap() which returns { data: response.data, success: true }
+      // The backend returns { status: "success", message: "...", data: { access_token: "...", refresh_token: "..." } }
+      // So the structure is: response.data (from wrap) -> backend response -> .data (inner)
+      const backendResponse = response.data as any
+      const tokens = backendResponse?.data
+
+      const newAccessToken = tokens?.access_token
+      const newRefreshToken = tokens?.refresh_token
 
       if (!newAccessToken) {
         throw new Error('No access token returned from refresh endpoint')
@@ -211,7 +215,7 @@ class ApiClient {
       this.setAuthToken(newAccessToken)
       localStorage.setItem(ACCESS_TOKEN, newAccessToken)
 
-      // Update refresh token if a new one was provided
+      // Update refresh token if a new one was provided (Token Rotation)
       if (newRefreshToken) {
         localStorage.setItem(REFRESH_TOKEN, newRefreshToken)
       }
@@ -221,7 +225,7 @@ class ApiClient {
       // Clear tokens if refresh fails
       this.clearAuth()
       throw new Error(
-        error.response?.data?.message || 'Failed to refresh token'
+        error.message || 'Failed to refresh token'
       )
     }
   }
@@ -235,8 +239,9 @@ class ApiClient {
     this.protectedApi.defaults.headers.Authorization = `Bearer ${token}`
 
     try {
-      const decoded = jwtDecode<AuthToken>(token)
-      this.decodedUserId = String(decoded.userId)
+      const decoded = jwtDecode<any>(token)
+      // Support both 'sub' (standard JWT) and 'userId' (custom)
+      this.decodedUserId = String(decoded.sub || decoded.userId || '')
     } catch {
       this.decodedUserId = null
     }

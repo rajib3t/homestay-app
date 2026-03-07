@@ -1,6 +1,4 @@
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getCountriesQuery } from "@/locations/queries";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,28 +10,25 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import PaginationRender from "@/components/pagination-render";
+
 import type { Country } from "@/types/location";
+import type { PaginatedMeta } from "@/types/common";
 
-export const CountryList: React.FC = () => {
-  const [page, setPage] = useState(1);
-  const [limit] = useState(5); // Fixed limit for simplicity, can be made dynamic
+interface CountryListProps {
+  data?: Country[];
+  isLoading?: boolean;
+  meta?: PaginatedMeta;
+  onPageChange: (newPage: number) => void;
+}
 
-  const { data, isLoading } = useQuery(getCountriesQuery(page, limit)());
-
-  // Normalize response: service returns ApiResponse<T> where payload is in `data`
-  const countries = data?.data || [];
-  const meta = data?.meta;
-
-  const totalPages = meta?.total ? Math.ceil(meta.total / limit) : 1;
-  
-  
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setPage(newPage);
-    }
-  };
-
-  // Pagination items rendered by separate component
+export const CountryList: React.FC<CountryListProps> = ({
+  data,
+  isLoading,
+  meta,
+  onPageChange,
+}) => {
+  const totalPages =
+    meta?.total && meta?.size ? Math.ceil(meta.total / meta.size) : 1;
 
   return (
     <div className="flex flex-col gap-6 pb-6 border-b">
@@ -54,36 +49,50 @@ export const CountryList: React.FC = () => {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  Loading...
+                  <div className="animate-pulse text-muted-foreground">
+                    Loading countries...
+                  </div>
                 </TableCell>
               </TableRow>
-            ) : countries.length === 0 ? (
+            ) : !data || data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
                   No countries found.
                 </TableCell>
               </TableRow>
             ) : (
-              countries.map((country: Country) => (
+              data.map((country) => (
                 <TableRow key={country.id}>
-                  <TableCell className="font-medium">{country.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {country.name}
+                  </TableCell>
+
                   <TableCell>{country.code}</TableCell>
+
                   <TableCell>{country.dial_code}</TableCell>
-                  <TableCell>{Array.isArray(country.cities) ? country.cities.length : country.cities}</TableCell>
+
+                  <TableCell>{Array.isArray(country.cities) ? country.cities.length : 0}</TableCell>
+
                   <TableCell>
-                    <Badge
-                      variant={
-                        country.status ? "default" : "secondary"
-                      }
-                    >
+                    <Badge variant={country.status ? "default" : "secondary"}>
                       {country.status ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
+
                   <TableCell className="text-right space-x-2">
-                    <Button size="sm" variant="outline" className="cursor-pointer">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="cursor-pointer"
+                    >
                       Edit
                     </Button>
-                    <Button size="sm" variant="destructive" className="cursor-pointer">
+
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="cursor-pointer"
+                    >
                       Disable
                     </Button>
                   </TableCell>
@@ -95,7 +104,11 @@ export const CountryList: React.FC = () => {
       </div>
 
       {totalPages > 1 && (
-        <PaginationRender page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+        <PaginationRender
+          page={meta?.page ?? 1}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
       )}
     </div>
   );

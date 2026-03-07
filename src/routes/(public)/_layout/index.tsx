@@ -4,6 +4,19 @@ import * as React from 'react'
 import PropertyCard from '@/public/home/property-card'
 
 export const Route = createFileRoute('/(public)/_layout/')({
+  head: () => ({
+    title: 'Home',
+    meta: [
+      {
+        name: 'description',
+        content: 'Welcome to our homestay platform. Find your perfect stay with us.',
+      },
+      {
+        property: 'og:title',
+        content: 'Home',
+      },
+    ],
+  }),
   component: RouteComponent,
 })
 

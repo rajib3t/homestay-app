@@ -68,7 +68,7 @@ export default defineConfig(({ mode }) => {
         "/api/v1": env.VITE_API_BASE_URL
       },
       allowedHosts: [
-        'localhost', '127.0.0.1', 'telemedicine-app.test'],
+        'localhost', '127.0.0.1'],
 
     },
   }

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TestHeadRouteImport } from './routes/test-head'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedUnauthorizedRouteImport } from './routes/_authenticated/unauthorized'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
@@ -21,6 +22,11 @@ import { Route as AuthenticatedAdminCountriesRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminCitiesRouteImport } from './routes/_authenticated/_admin/cities'
 import { Route as authLayoutLoginRouteImport } from './routes/(auth)/_layout/login'
 
+const TestHeadRoute = TestHeadRouteImport.update({
+  id: '/test-head',
+  path: '/test-head',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -77,6 +83,7 @@ const authLayoutLoginRoute = authLayoutLoginRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/test-head': typeof TestHeadRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/': typeof publicLayoutIndexRoute
 }
 export interface FileRoutesByTo {
+  '/test-head': typeof TestHeadRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
@@ -97,6 +105,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/test-head': typeof TestHeadRoute
   '/(auth)/_layout': typeof authLayoutRouteWithChildren
   '/(public)/_layout': typeof publicLayoutRouteWithChildren
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
@@ -111,6 +120,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/test-head'
     | '/dashboard'
     | '/profile'
     | '/unauthorized'
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/test-head'
     | '/dashboard'
     | '/profile'
     | '/unauthorized'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/test-head'
     | '/(auth)/_layout'
     | '/(public)/_layout'
     | '/_authenticated/_admin'
@@ -144,12 +156,20 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  TestHeadRoute: typeof TestHeadRoute
   authLayoutRoute: typeof authLayoutRouteWithChildren
   publicLayoutRoute: typeof publicLayoutRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/test-head': {
+      id: '/test-head'
+      path: '/test-head'
+      fullPath: '/test-head'
+      preLoaderRoute: typeof TestHeadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -287,6 +307,7 @@ const publicLayoutRouteWithChildren = publicLayoutRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  TestHeadRoute: TestHeadRoute,
   authLayoutRoute: authLayoutRouteWithChildren,
   publicLayoutRoute: publicLayoutRouteWithChildren,
 }

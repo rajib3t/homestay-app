@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import {
   Home,
   FileText,
@@ -78,13 +78,15 @@ export function AppSidebar() {
   }
   const [currentPath, setCurrentPath] = useState<string>(normalizePath(window.location.pathname))
 
+  const routerState = useRouterState()
+
   // Open menu parents that match the current path (and keep atom in sync)
   useEffect(() => {
-    const openForPath = (pathname = window.location.pathname) => {
+    const openForPath = (pathname = routerState.location.pathname) => {
       const normalized = normalizePath(pathname)
       setCurrentPath(normalized)
-      const current = getSidebarOpen()
-      const next: Record<string, boolean> = { ...current }
+      // Start fresh so unrelated parents are closed when navigating
+      const next: Record<string, boolean> = {}
 
       menuItems.forEach((item) => {
         if (item.children) {
@@ -102,34 +104,7 @@ export function AppSidebar() {
     }
 
     openForPath()
-
-    const onLocationChange = () => openForPath()
-
-    // dispatch a custom event on history changes so we can react to router navigations
-    if (!(window as any).__sidebar_history_patched) {
-      const _push = history.pushState
-      const _replace = history.replaceState
-      history.pushState = function (...args: any[]) {
-        const result = _push.apply(this, args as any)
-        window.dispatchEvent(new Event('locationchange'))
-        return result
-      }
-      history.replaceState = function (...args: any[]) {
-        const result = _replace.apply(this, args as any)
-        window.dispatchEvent(new Event('locationchange'))
-        return result
-      }
-      ;(window as any).__sidebar_history_patched = true
-    }
-
-    window.addEventListener('popstate', onLocationChange)
-    window.addEventListener('locationchange', onLocationChange)
-
-    return () => {
-      window.removeEventListener('popstate', onLocationChange)
-      window.removeEventListener('locationchange', onLocationChange)
-    }
-  }, [])
+  }, [routerState.location.pathname])
 
   const toggleItem = (title: string) => {
     updateSidebarItem(title)

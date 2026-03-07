@@ -18,6 +18,31 @@ import type { ApiResponse } from '@/types/common'
 import { useProfile } from '@/hooks/use-profile'
 
 export const Route = createFileRoute('/_authenticated/profile')({
+  head: () => ({
+    title: 'Profile',
+    meta: [
+      {
+        name: 'description',
+        content: 'View and update your profile information.',
+      },
+      {
+        property: 'og:title',
+        content: 'Profile',
+      },
+      {
+        property: 'og:description',
+        content: 'View and update your profile information.',
+      },
+      {
+        name: 'twitter:title',
+        content: 'Profile',
+      },
+      {
+        name: 'twitter:description',
+        content: 'View and update your profile information.',
+      },
+    ],
+  }),
   component: RouteComponent,
 })
 
@@ -30,9 +55,7 @@ function RouteComponent() {
 
   const { isLoading, isError, error } = useProfile()
 
-  useEffect(() => {
-    setMetaTitle('Profile — Telemedicine', 'Your account information')
-  }, [])
+
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 

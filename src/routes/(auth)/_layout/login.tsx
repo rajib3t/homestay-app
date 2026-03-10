@@ -92,6 +92,7 @@ function RouteComponent() {
     mutationFn: async (data: { identifier: string; method: 'email' | 'mobile' }) => {
       // Replace with your actual OTP API call
       // return sendOtp(data)
+      console.log('Sending OTP with data:', data)
       return new Promise((resolve) => setTimeout(resolve, 1000))
     },
     onSuccess: () => {
@@ -111,7 +112,8 @@ function RouteComponent() {
   } = useMutation({
     mutationFn: async (data: { identifier: string; otp: string; method: 'email' | 'mobile' }) => {
       // Replace with your actual OTP verification API call
-      // return verifyOtp(data)
+      //return verifyOtp(data)
+      console.log('Verifying OTP with data:', data)
       return new Promise((resolve) => setTimeout(resolve, 1000))
     },
     onSuccess: () => {

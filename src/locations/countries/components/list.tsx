@@ -25,6 +25,9 @@ interface CountryListProps {
   setOpenEditCountryModal: (open: boolean) => void;
   onUpdateCountry?: (updatedCountry: Country) => void;
   openStatusChangeModal?: (country: Country) => void;
+  onSortChange?: (sortBy: string, order: 'asc' | 'desc') => void;
+  currentSort?: string | null;
+  currentOrder?: string | null;
   
 }
 
@@ -37,6 +40,9 @@ export const CountryList: React.FC<CountryListProps> = ({
   setOpenEditCountryModal,
   onUpdateCountry,
   openStatusChangeModal,
+  onSortChange,
+  currentSort,
+  currentOrder,
   
 }) => {
   const [selectedCountry, setSelectedCountry] = React.useState<Country | null>(null);
@@ -52,8 +58,36 @@ export const CountryList: React.FC<CountryListProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Code</TableHead>
+              <TableHead>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const col = 'name'
+                    const current = currentSort === col ? (currentOrder === 'asc' ? 'desc' : 'asc') : 'asc'
+                    onSortChange?.(col, current as 'asc' | 'desc')
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  Name
+                  {currentSort === 'name' ? (currentOrder === 'asc' ? '▲' : '▼') : ''}
+                </button>
+              </TableHead>
+
+              <TableHead>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const col = 'code'
+                    const current = currentSort === col ? (currentOrder === 'asc' ? 'desc' : 'asc') : 'asc'
+                    onSortChange?.(col, current as 'asc' | 'desc')
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  Code
+                  {currentSort === 'code' ? (currentOrder === 'asc' ? '▲' : '▼') : ''}
+                </button>
+              </TableHead>
+
               <TableHead>Dial Code</TableHead>
               <TableHead>Cities</TableHead>
               <TableHead>Status</TableHead>

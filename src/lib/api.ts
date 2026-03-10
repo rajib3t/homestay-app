@@ -122,7 +122,7 @@ class ApiClient {
         'Something went wrong',
       status,
       code: data?.code || error.code,
-      details: data?.detail ?? data?.details ?? data?.errors,
+      details: data?.details ?? data?.details ?? data?.errors,
     }
 
     // Only handle 401 for protected API requests, not for refresh endpoint

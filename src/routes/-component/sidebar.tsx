@@ -22,12 +22,12 @@ import {
   Activity,
   User,
   LogOut,
-  Boxes,
   MapPin
 } from 'lucide-react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { env } from '@/lib/env'
 
 const menuItems: Array<{
   title: string
@@ -129,8 +129,8 @@ export function AppSidebar() {
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-semibold">TeleMed</span>
-              <span className="text-xs text-muted-foreground">Healthcare Portal</span>
+              <span className="text-sm font-semibold">{env.get('APP_NAME')}</span>
+              {/* <span className="text-xs text-muted-foreground">{env.get('APP_DESCRIPTION')}</span> */}
             </div>
           )}
         </div>

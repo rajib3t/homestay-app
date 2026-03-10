@@ -11,11 +11,18 @@ import { createCountry as createCountryService, updateCountry as updateCountrySe
 import { parseValidationErrors } from '@/lib/utils'
 import { getCountriesQuery } from "@/locations/queries";
 import ConfirmCountryModal from '@/locations/countries/components/confirm'
+import CountriesSearch from '@/locations/countries/components/search'
 
 export const Route = createFileRoute("/_authenticated/_admin/countries")({
   validateSearch: (search: Record<string, unknown>) => ({
     page: Number(search.page ?? 1),
     limit: Number(search.limit ?? 5),
+    sort: typeof search.sort === 'string' ? search.sort : undefined,
+    sort_order: typeof search.sort_order === 'string' ? search.sort_order : undefined,
+    filter: search.filter && typeof search.filter === 'object' ? {
+      search_field: typeof (search.filter as Record<string, unknown>).search_field === 'string' ? (search.filter as Record<string, unknown>).search_field as string : undefined,
+      search_value: typeof (search.filter as Record<string, unknown>).search_value === 'string' ? (search.filter as Record<string, unknown>).search_value as string : undefined,
+    } : undefined,
   }),
 
   head: () => ({
@@ -45,11 +52,11 @@ function RouteComponent() {
   const [statusChanging, setStatusChanging] = useState(false)
   const queryClient = useQueryClient();
 
-  const { page, limit } = Route.useSearch();
+  const { page, limit, sort, sort_order, filter } = Route.useSearch();
   const navigate = Route.useNavigate();
 
   const { data: queryData, isLoading } = useQuery({
-    ...getCountriesQuery(page, limit)(),
+    ...getCountriesQuery(page, limit, sort, sort_order, filter)(),
     placeholderData: (prev) => prev,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
@@ -234,6 +241,35 @@ useEffect(() => {
     <React.Fragment>
       <CountryHeader openNewCountryModal={openNewCountryModal} setOpenNewCountryModal={setOpenNewCountryModal} onAddNewCountry={handleAddNewCountry} validationErrors={validationErrors} />
 
+      <div className="py-4">
+        <CountriesSearch
+          initialField={filter?.search_field ?? 'name'}
+          initialValue={filter?.search_value ?? ''}
+          initialSort={`${sort ?? 'name'}:${sort_order ?? 'asc'}`}
+          onSearch={(f) => {
+            navigate({
+              search: (prev) => ({
+                ...prev,
+                page: 1,
+                filter: f && f.search_value
+                  ? { ...(prev.filter as Record<string, unknown>), search_field: f.search_field, search_value: f.search_value }
+                  : undefined,
+              }),
+            })
+          }}
+          onSortChange={(val) => {
+            const [s, order] = String(val).split(":")
+            navigate({
+              search: (prev) => ({
+                ...prev,
+                page: 1,
+                sort: s,
+                sort_order: order,
+              }),
+            })
+          }}
+        />
+      </div>
 
       <CountryList
         data={countries}
@@ -244,6 +280,18 @@ useEffect(() => {
         setOpenEditCountryModal={setOpenEditCountryModal}
         onUpdateCountry={handleUpdateCountry}
         openStatusChangeModal={openStatusChangeModal}
+        onSortChange={(col, order) => {
+          navigate({
+            search: (prev) => ({
+              ...prev,
+              page: 1,
+              sort: col,
+              sort_order: order,
+            }),
+          })
+        }}
+        currentSort={sort ?? null}
+        currentOrder={sort_order ?? null}
        />
 
       <ConfirmCountryModal

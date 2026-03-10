@@ -18,8 +18,8 @@ export const statusChangeCountry = (id: string, status: boolean) => {
 }
 
 
-export const fetchCountries = async (page: number, limit: number) => {
-    const url = `/locations/countries?page=${page}&size=${limit}`;
+export const fetchCountries = async (page: number, limit: number, sort?: string, sort_order?: string, filter?: {search_field?: string , search_value?: string}) => {
+    const url = `/locations/countries?page=${page}&size=${limit}${sort ? `&sort_by=${sort}` : ''}${sort_order ? `&sort_order=${sort_order}` : ''}${filter?.search_field && filter?.search_value ? `&search_field=${filter.search_field}&search_value=${filter.search_value}` : ''}`;
      const response = await protectedApi.get<ApiResponse<Country[]>>(url);
 
      return response.data as unknown as ApiResponse<Country[]>;

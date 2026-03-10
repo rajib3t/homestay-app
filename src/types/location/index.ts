@@ -17,5 +17,6 @@ export interface UpdateCountryDTO {
     name?: string;
     code?: string;
     dial_code?: string;
-    status?: "Active" | "Inactive";
+   
+   
 }

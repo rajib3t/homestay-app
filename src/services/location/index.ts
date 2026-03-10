@@ -1,11 +1,20 @@
 import { protectedApi } from "@/lib/api";
 import type { ApiResponse } from "@/types/common";
 
-import type { CreateCountryDTO , Country } from "@/types/location";
+import type { CreateCountryDTO , Country, UpdateCountryDTO } from "@/types/location";
 
 export const createCountry = (payload: CreateCountryDTO) => {
     const { name, code, dial_code } = payload;
     return protectedApi.post<ApiResponse<Country>>('/locations/country', { name, code, dial_code: Number(dial_code) });
+}
+
+export const updateCountry = (id: string, payload: UpdateCountryDTO) => {
+    const { name, code, dial_code } = payload;
+    return protectedApi.patch<ApiResponse<Country>>(`/locations/country/${id}`, { name, code, dial_code: dial_code ? Number(dial_code) : undefined });
+}
+
+export const statusChangeCountry = (id: string, status: boolean) => {
+    return protectedApi.patch<ApiResponse<Country>>(`/locations/country/${id}/status`, { status });
 }
 
 

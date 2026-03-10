@@ -17,6 +17,7 @@ export interface ApiError {
   message: string
   status: number
   code?: string
+  details?: any
 }
 
 export interface RefreshTokenResponse {
@@ -121,6 +122,7 @@ class ApiClient {
         'Something went wrong',
       status,
       code: data?.code || error.code,
+      details: data?.detail ?? data?.details ?? data?.errors,
     }
 
     // Only handle 401 for protected API requests, not for refresh endpoint

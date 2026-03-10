@@ -11,6 +11,7 @@ interface ConfirmDialogProps {
   description?: React.ReactNode
   confirmLabel?: string
   cancelLabel?: string
+  destructive?: boolean
   onConfirm: () => void | Promise<void>
   isLoading?: boolean
   className?: string
@@ -23,6 +24,7 @@ export function ConfirmDialog({
   description = 'Are you sure you want to continue?',
   confirmLabel = 'Delete',
   cancelLabel = 'Cancel',
+  destructive = true,
   onConfirm,
   isLoading = false,
   className,
@@ -49,7 +51,7 @@ export function ConfirmDialog({
             <Dialog.Close asChild>
               <button
                 aria-label="Close"
-                className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+                className="rounded-md p-1 text-muted-foreground hover:bg-muted cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -58,17 +60,18 @@ export function ConfirmDialog({
 
           <div className="mt-6 flex justify-end gap-3">
             <Dialog.Close asChild>
-              <Button variant="outline" disabled={isLoading}>
+              <Button variant="outline" disabled={isLoading} className="cursor-pointer">
                 {cancelLabel}
               </Button>
             </Dialog.Close>
 
             <Button
+              className="cursor-pointer"
               onClick={onConfirm}
-              className="bg-destructive text-destructive-foreground hover:scale-[1.02]"
+              variant={destructive ? 'destructive' : 'default'}
               disabled={isLoading}
             >
-              {isLoading ? 'Deleting...' : confirmLabel}
+              {isLoading ? (destructive ? 'Deleting...' : 'Processing...') : confirmLabel}
             </Button>
           </div>
         </Dialog.Content>

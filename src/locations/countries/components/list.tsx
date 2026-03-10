@@ -13,12 +13,19 @@ import PaginationRender from "@/components/pagination-render";
 
 import type { Country } from "@/types/location";
 import type { PaginatedMeta } from "@/types/common";
+import  EditCountryModal  from "./edit";
 
 interface CountryListProps {
   data?: Country[];
   isLoading?: boolean;
   meta?: PaginatedMeta;
+  
+  openEditCountryModal: boolean;
   onPageChange: (newPage: number) => void;
+  setOpenEditCountryModal: (open: boolean) => void;
+  onUpdateCountry?: (updatedCountry: Country) => void;
+  openStatusChangeModal?: (country: Country) => void;
+  
 }
 
 export const CountryList: React.FC<CountryListProps> = ({
@@ -26,12 +33,21 @@ export const CountryList: React.FC<CountryListProps> = ({
   isLoading,
   meta,
   onPageChange,
+  openEditCountryModal,
+  setOpenEditCountryModal,
+  onUpdateCountry,
+  openStatusChangeModal,
+  
 }) => {
+  const [selectedCountry, setSelectedCountry] = React.useState<Country | null>(null);
+  
+
   const totalPages =
     meta?.total && meta?.size ? Math.ceil(meta.total / meta.size) : 1;
 
   return (
     <div className="flex flex-col gap-6 pb-6 border-b">
+      
       <div className="rounded-2xl border shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
@@ -84,16 +100,25 @@ export const CountryList: React.FC<CountryListProps> = ({
                       size="sm"
                       variant="outline"
                       className="cursor-pointer"
+                      onClick={() => {
+                        setSelectedCountry(country);
+                        setOpenEditCountryModal(true);
+                      }}
                     >
                       Edit
                     </Button>
 
                     <Button
                       size="sm"
-                      variant="destructive"
+                      variant={country.status ? "destructive" : "default"}
                       className="cursor-pointer"
+                      onClick={() => {
+                        if (openStatusChangeModal) {
+                          openStatusChangeModal(country);
+                        }
+                      }}
                     >
-                      Disable
+                      {country.status ? "Disable" : "Enable"}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -110,6 +135,34 @@ export const CountryList: React.FC<CountryListProps> = ({
           onPageChange={onPageChange}
         />
       )}
+
+    
+
+      {/* EDIT COUNTRY MODAL */}
+      {openEditCountryModal && selectedCountry && (
+        <React.Suspense fallback={
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="animate-pulse text-white text-lg">Loading...</div>
+          </div>
+        }>
+          <EditCountryModal
+            country={selectedCountry}
+            onOpenChange={(open: boolean) => {
+              setOpenEditCountryModal(open);
+              if (!open) setSelectedCountry(null);
+            }}
+            onSave={(updatedCountry: Country) => {
+              // close modal and clear selection. Caller can handle persistence elsewhere.
+              setOpenEditCountryModal(false);
+              setSelectedCountry(null);
+              if (onUpdateCountry) onUpdateCountry(updatedCountry);
+            }}
+           />
+        </React.Suspense>
+      )}
+      {/* END EDIT COUNTRY MODAL */}
+  
     </div>
   );
-};
+}
+ 

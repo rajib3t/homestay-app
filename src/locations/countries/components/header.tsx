@@ -1,28 +1,21 @@
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Plus, X } from "lucide-react"
-import React, { useState } from "react"
+
+import { Plus } from "lucide-react"
+import React from "react"
 import  type { CreateCountryDTO } from '@/types/location'
+import AddCountryModal from './add'
 
 export const CountryHeader: React.FC<{
-  onAddNewCountry: (payload: CreateCountryDTO) => void
+  openNewCountryModal: boolean;
+  setOpenNewCountryModal: (open: boolean) => void;
+  onAddNewCountry: (payload: CreateCountryDTO) => Promise<any> | void
+  validationErrors?: Record<string, string[]>
 }> = ({
+  openNewCountryModal,
+  setOpenNewCountryModal,
   onAddNewCountry,
+  validationErrors,
 }) => {
-  const [openNewCountryModal, setOpenNewCountryModal] = useState(false)
-  const [form, setForm] = useState<CreateCountryDTO>({ name: '', code: '', dial_code: '' })
-
-  const handleChange = (field: keyof CreateCountryDTO, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }))
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onAddNewCountry(form)
-    setForm({ name: '', code: '', dial_code: '' })
-    setOpenNewCountryModal(false)
-  }
-
   return (
     <React.Fragment>
       <div className="flex flex-col gap-4 pb-6 border-b">
@@ -49,76 +42,19 @@ export const CountryHeader: React.FC<{
         </div>
       </div>
 
-      {/* FULL PAGE MODAL */}
       {openNewCountryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-
-          {/* Modal Box */}
-          <div className="w-full max-w-lg bg-white rounded-xl shadow-xl p-6 relative">
-
-            {/* Close Icon */}
-            <button
-              onClick={() => setOpenNewCountryModal(false)}
-              className="absolute right-4 top-4 text-gray-500 hover:text-black cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-
-            <h2 className="text-xl font-semibold mb-6">
-              Add New Country
-            </h2>
-
-            {/* Form */}
-            <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-
-              <div>
-                <label className="text-sm font-medium">Country Name</label>
-                <Input
-                  placeholder="India"
-                  value={form.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('name', e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Country Code</label>
-                <Input
-                  placeholder="IN"
-                  value={form.code}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('code', e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Dial Code</label>
-                <Input
-                  placeholder="91"
-                  value={form.dial_code}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('dial_code', e.target.value)}
-                />
-              </div>
-
-              {/* Buttons */}
-              <div className="flex justify-end gap-3 pt-4">
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="cursor-pointer"
-                  onClick={() => setOpenNewCountryModal(false)}
-                >
-                  Cancel
-                </Button>
-
-                <Button type="submit" className="cursor-pointer">
-                  Save Country
-                </Button>
-
-              </div>
-
-            </form>
-          </div>
-        </div>
+        <AddCountryModal
+          onOpenChange={(open: boolean) => setOpenNewCountryModal(open)}
+          onSave={async (payload: CreateCountryDTO) => {
+            try {
+              await onAddNewCountry(payload)
+              setOpenNewCountryModal(false)
+            } catch (e) {
+              // keep modal open to show validation errors
+            }
+          }}
+          validationErrors={validationErrors}
+        />
       )}
     </React.Fragment>
   )

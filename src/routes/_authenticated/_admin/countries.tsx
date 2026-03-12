@@ -14,15 +14,20 @@ import ConfirmCountryModal from '@/locations/countries/components/confirm'
 import CountriesSearch from '@/locations/countries/components/search'
 
 export const Route = createFileRoute("/_authenticated/_admin/countries")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: RouteSearch) => ({
     page: Number(search.page ?? 1),
     limit: Number(search.limit ?? 5),
     sort: typeof search.sort === 'string' ? search.sort : undefined,
     sort_order: typeof search.sort_order === 'string' ? search.sort_order : undefined,
-    filter: search.filter && typeof search.filter === 'object' ? {
-      search_field: typeof (search.filter as Record<string, unknown>).search_field === 'string' ? (search.filter as Record<string, unknown>).search_field as string : undefined,
-      search_value: typeof (search.filter as Record<string, unknown>).search_value === 'string' ? (search.filter as Record<string, unknown>).search_value as string : undefined,
-    } : undefined,
+    filter: (() => {
+      const raw = search.filter as any;
+      if (!raw || typeof raw !== 'object') return undefined;
+      const arr = Array.isArray(raw) ? raw : [raw];
+      return arr.map((f: any) => ({
+        search_field: typeof f?.search_field === 'string' ? f.search_field : undefined,
+        search_value: typeof f?.search_value === 'string' ? f.search_value : undefined,
+      }));
+    })(),
   }),
 
   head: () => ({
@@ -55,8 +60,10 @@ function RouteComponent() {
   const { page, limit, sort, sort_order, filter } = Route.useSearch();
   const navigate = Route.useNavigate();
 
+  const searchFilter = filter ? { filter } : undefined;
+
   const { data: queryData, isLoading } = useQuery({
-    ...getCountriesQuery(page, limit, sort, sort_order, filter)(),
+    ...getCountriesQuery(page, limit, sort, sort_order, searchFilter)(),
     placeholderData: (prev) => prev,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
@@ -243,17 +250,17 @@ useEffect(() => {
 
       <div className="py-4">
         <CountriesSearch
-          initialField={filter?.search_field ?? 'name'}
-          initialValue={filter?.search_value ?? ''}
+            initialField={filter?.[0]?.search_field ?? 'name'}
+            initialValue={filter?.[0]?.search_value ?? ''}
           initialSort={`${sort ?? 'name'}:${sort_order ?? 'asc'}`}
           onSearch={(f) => {
             navigate({
               search: (prev) => ({
                 ...prev,
                 page: 1,
-                filter: f && f.search_value
-                  ? { ...(prev.filter as Record<string, unknown>), search_field: f.search_field, search_value: f.search_value }
-                  : undefined,
+                  filter: f && f.search_value
+                    ? [{ search_field: f.search_field, search_value: f.search_value }]
+                    : undefined,
               }),
             })
           }}

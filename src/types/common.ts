@@ -2,3 +2,7 @@
 export type PaginatedResponse<T> = globalThis.PaginatedResponse<T>;
 export type ApiResponse<T = unknown> = globalThis.ApiResponse<T>;
 export type PaginatedMeta = globalThis.PaginatedMeta;
+
+export type SearchParams = globalThis.SearchParams;
+export type Filter = globalThis.Filter;
+export type RouteSearch = globalThis.RouteSearch;

@@ -32,6 +32,24 @@ declare global {
         size?: number;
         
     }
+
+    interface RouteSearch {
+        page?: string;
+        limit?: string;
+         sort?: string;
+         sort_order?: string;
+         filter?: Filter[];
+    }
+    
+    interface SearchParams {
+        // Optional array of filters to apply to a search/query
+        filter?: Filter[];
+    }
+    interface Filter {
+
+        search_field?: string;
+        search_value?: string | number | boolean | null;
+    }
 }
 
 export {};

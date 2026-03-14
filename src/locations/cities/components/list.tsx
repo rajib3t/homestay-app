@@ -117,7 +117,7 @@ export const CityList: React.FC<CityListProps> = ({
             </TableCell>
 
             <TableCell>{city.country}</TableCell>
-            <TableCell>0</TableCell>
+            <TableCell>{city.location_count ?? 0}</TableCell>
             <TableCell>{city.is_popular ? "Yes" : "No"}</TableCell>
 
             <TableCell className="text-right space-x-2">

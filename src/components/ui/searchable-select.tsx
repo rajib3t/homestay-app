@@ -27,12 +27,14 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ options = [], value
   React.useEffect(() => {
     if (onSearch) {
       let mounted = true;
-      onSearch(query).then(res => {
-        if (mounted) setFiltered(res);
-      }).catch(() => {
-        if (mounted) setFiltered([]);
-      });
-      return () => { mounted = false; };
+      const timer = setTimeout(() => {
+        onSearch(query).then(res => {
+          if (mounted) setFiltered(res);
+        }).catch(() => {
+          if (mounted) setFiltered([]);
+        });
+      }, 300);
+      return () => { mounted = false; clearTimeout(timer); };
     }
 
     const q = query.trim().toLowerCase();

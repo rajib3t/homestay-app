@@ -22,7 +22,8 @@ import {
   Activity,
   User,
   LogOut,
-  MapPin
+  MapPin,
+  VectorSquare 
 } from 'lucide-react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -46,11 +47,12 @@ const menuItems: Array<{
     ],
   },
   {
-    title: 'Homestays',
-    icon: User,
+    title: 'Attributes',
+    icon: VectorSquare,
     children: [
-      { title: 'All Homestays', url: '/homestays' },
-      { title: 'Add Homestay', url: '/homestays/add' },
+      { title: 'Amenities', url: '/amenities' },
+      { title: 'Facilities', url: '/facility' },
+      { title: 'Bed Types', url: '/bed-types' },
     ],
   },
   {

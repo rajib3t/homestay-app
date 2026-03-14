@@ -8,7 +8,7 @@ export const getCountriesQuery = (page: number, limit: number, sort?: string, so
       queryFn: () => fetchCountries(page, limit, sort, sort_order, filter),
    })
 
-export const getCountryQuery = (id: number) => () =>
+export const getCountryQuery = (id: string) => () =>
    queryOptions({
       queryKey: ["GET_COUNTRY", id],
       queryFn: () => fetchCountry(id),

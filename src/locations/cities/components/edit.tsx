@@ -26,6 +26,10 @@ const EditCityModal: React.FC<EditCityModalProps> = ({ city, onOpenChange, onSav
 
   const handleChange = (field: keyof City, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }));
+    if (field === 'country' && value !== form.country) {
+      // Clear city selection if country changes
+      setForm(prev => ({ ...prev, name: '' }));
+    }
   };
 
   const handleImageChange = (file?: File) => {

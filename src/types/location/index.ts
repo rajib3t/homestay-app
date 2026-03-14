@@ -44,6 +44,8 @@ export interface City {
     name: string;
     country: string;
     is_popular: boolean;
+    location_count?: number; // Optional field to store the count of locations if needed
+    locations?: Location[]; // Optional field to store the list of locations if needed
     image?: string | null;
 }
 

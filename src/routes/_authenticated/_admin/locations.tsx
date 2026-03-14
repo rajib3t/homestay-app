@@ -8,6 +8,7 @@ import { createLocation, updateLocation } from "@/services/location"
 import { getLocationsQuery, getLocationQuery } from "@/locations/queries"
 import { LocationList } from "@/locations/location/components/list"
 import type { Location } from "@/types/location"
+import LocationSearch from '@/locations/location/components/search'
 export const Route = createFileRoute('/_authenticated/_admin/locations')({
     validateSearch: (search: RouteSearch) => ({
     page: Number(search.page ?? 1),
@@ -167,6 +168,43 @@ function RouteComponent() {
   return (
     <React.Fragment>
         <HeaderLocation openNewLocationModal={openNewLocationModal} setOpenNewLocationModal={setOpenNewLocationModal} onAddNewLocation={handleAddNewLocation} validationErrors={validationErrors} />
+        {/* Search / filter */}
+        <div className="pb-4">
+          <LocationSearch
+            initialField={(() => {
+              const f = Array.isArray(filter) ? filter[0] : filter;
+              return (f && (f as any).search_field) ? (f as any).search_field : 'name'
+            })()}
+            initialValue={(() => {
+              const f = Array.isArray(filter) ? filter[0] : filter;
+              return (f && (f as any).search_value) ? (f as any).search_value : ''
+            })()}
+            initialSort={sort && sort_order ? `${sort}:${sort_order}` : 'name:asc'}
+            onSearch={(f) => {
+            navigate({
+              search: (prev) => ({
+                ...prev,
+                page: 1,
+                filter:
+                  f && f.search_value
+                    ? [{ search_field: f.search_field, search_value: f.search_value }]
+                    : undefined,
+              }),
+            })
+            }}
+            onSortChange={(value) => {
+              const [col, order] = String(value).split(':')
+              navigate({
+                search: (prev) => ({
+                  ...prev,
+                  page: 1,
+                  sort: col,
+                  sort_order: order,
+                }),
+              })
+            }}
+          />
+        </div>
         <LocationList
         data={locations}
         isLoading={isLoading}

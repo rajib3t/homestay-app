@@ -19,8 +19,11 @@ import { Route as publicLayoutRouteImport } from './routes/(public)/_layout'
 import { Route as authLayoutRouteImport } from './routes/(auth)/_layout'
 import { Route as publicLayoutIndexRouteImport } from './routes/(public)/_layout/index'
 import { Route as AuthenticatedAdminLocationsRouteImport } from './routes/_authenticated/_admin/locations'
+import { Route as AuthenticatedAdminFacilityRouteImport } from './routes/_authenticated/_admin/facility'
 import { Route as AuthenticatedAdminCountriesRouteImport } from './routes/_authenticated/_admin/countries'
 import { Route as AuthenticatedAdminCitiesRouteImport } from './routes/_authenticated/_admin/cities'
+import { Route as AuthenticatedAdminBedTypesRouteImport } from './routes/_authenticated/_admin/bed-types'
+import { Route as AuthenticatedAdminAmenitiesRouteImport } from './routes/_authenticated/_admin/amenities'
 import { Route as publicLayoutAboutRouteImport } from './routes/(public)/_layout/about'
 import { Route as authLayoutLoginRouteImport } from './routes/(auth)/_layout/login'
 
@@ -72,6 +75,12 @@ const AuthenticatedAdminLocationsRoute =
     path: '/locations',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminFacilityRoute =
+  AuthenticatedAdminFacilityRouteImport.update({
+    id: '/facility',
+    path: '/facility',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCountriesRoute =
   AuthenticatedAdminCountriesRouteImport.update({
     id: '/countries',
@@ -82,6 +91,18 @@ const AuthenticatedAdminCitiesRoute =
   AuthenticatedAdminCitiesRouteImport.update({
     id: '/cities',
     path: '/cities',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminBedTypesRoute =
+  AuthenticatedAdminBedTypesRouteImport.update({
+    id: '/bed-types',
+    path: '/bed-types',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAmenitiesRoute =
+  AuthenticatedAdminAmenitiesRouteImport.update({
+    id: '/amenities',
+    path: '/amenities',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const publicLayoutAboutRoute = publicLayoutAboutRouteImport.update({
@@ -102,8 +123,11 @@ export interface FileRoutesByFullPath {
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/login': typeof authLayoutLoginRoute
   '/about': typeof publicLayoutAboutRoute
+  '/amenities': typeof AuthenticatedAdminAmenitiesRoute
+  '/bed-types': typeof AuthenticatedAdminBedTypesRoute
   '/cities': typeof AuthenticatedAdminCitiesRoute
   '/countries': typeof AuthenticatedAdminCountriesRoute
+  '/facility': typeof AuthenticatedAdminFacilityRoute
   '/locations': typeof AuthenticatedAdminLocationsRoute
   '/': typeof publicLayoutIndexRoute
 }
@@ -114,8 +138,11 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/login': typeof authLayoutLoginRoute
   '/about': typeof publicLayoutAboutRoute
+  '/amenities': typeof AuthenticatedAdminAmenitiesRoute
+  '/bed-types': typeof AuthenticatedAdminBedTypesRoute
   '/cities': typeof AuthenticatedAdminCitiesRoute
   '/countries': typeof AuthenticatedAdminCountriesRoute
+  '/facility': typeof AuthenticatedAdminFacilityRoute
   '/locations': typeof AuthenticatedAdminLocationsRoute
   '/': typeof publicLayoutIndexRoute
 }
@@ -131,8 +158,11 @@ export interface FileRoutesById {
   '/_authenticated/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/(auth)/_layout/login': typeof authLayoutLoginRoute
   '/(public)/_layout/about': typeof publicLayoutAboutRoute
+  '/_authenticated/_admin/amenities': typeof AuthenticatedAdminAmenitiesRoute
+  '/_authenticated/_admin/bed-types': typeof AuthenticatedAdminBedTypesRoute
   '/_authenticated/_admin/cities': typeof AuthenticatedAdminCitiesRoute
   '/_authenticated/_admin/countries': typeof AuthenticatedAdminCountriesRoute
+  '/_authenticated/_admin/facility': typeof AuthenticatedAdminFacilityRoute
   '/_authenticated/_admin/locations': typeof AuthenticatedAdminLocationsRoute
   '/(public)/_layout/': typeof publicLayoutIndexRoute
 }
@@ -145,8 +175,11 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/login'
     | '/about'
+    | '/amenities'
+    | '/bed-types'
     | '/cities'
     | '/countries'
+    | '/facility'
     | '/locations'
     | '/'
   fileRoutesByTo: FileRoutesByTo
@@ -157,8 +190,11 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/login'
     | '/about'
+    | '/amenities'
+    | '/bed-types'
     | '/cities'
     | '/countries'
+    | '/facility'
     | '/locations'
     | '/'
   id:
@@ -173,8 +209,11 @@ export interface FileRouteTypes {
     | '/_authenticated/unauthorized'
     | '/(auth)/_layout/login'
     | '/(public)/_layout/about'
+    | '/_authenticated/_admin/amenities'
+    | '/_authenticated/_admin/bed-types'
     | '/_authenticated/_admin/cities'
     | '/_authenticated/_admin/countries'
+    | '/_authenticated/_admin/facility'
     | '/_authenticated/_admin/locations'
     | '/(public)/_layout/'
   fileRoutesById: FileRoutesById
@@ -258,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLocationsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/facility': {
+      id: '/_authenticated/_admin/facility'
+      path: '/facility'
+      fullPath: '/facility'
+      preLoaderRoute: typeof AuthenticatedAdminFacilityRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/countries': {
       id: '/_authenticated/_admin/countries'
       path: '/countries'
@@ -270,6 +316,20 @@ declare module '@tanstack/react-router' {
       path: '/cities'
       fullPath: '/cities'
       preLoaderRoute: typeof AuthenticatedAdminCitiesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/bed-types': {
+      id: '/_authenticated/_admin/bed-types'
+      path: '/bed-types'
+      fullPath: '/bed-types'
+      preLoaderRoute: typeof AuthenticatedAdminBedTypesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/amenities': {
+      id: '/_authenticated/_admin/amenities'
+      path: '/amenities'
+      fullPath: '/amenities'
+      preLoaderRoute: typeof AuthenticatedAdminAmenitiesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/(public)/_layout/about': {
@@ -290,14 +350,20 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAmenitiesRoute: typeof AuthenticatedAdminAmenitiesRoute
+  AuthenticatedAdminBedTypesRoute: typeof AuthenticatedAdminBedTypesRoute
   AuthenticatedAdminCitiesRoute: typeof AuthenticatedAdminCitiesRoute
   AuthenticatedAdminCountriesRoute: typeof AuthenticatedAdminCountriesRoute
+  AuthenticatedAdminFacilityRoute: typeof AuthenticatedAdminFacilityRoute
   AuthenticatedAdminLocationsRoute: typeof AuthenticatedAdminLocationsRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAmenitiesRoute: AuthenticatedAdminAmenitiesRoute,
+  AuthenticatedAdminBedTypesRoute: AuthenticatedAdminBedTypesRoute,
   AuthenticatedAdminCitiesRoute: AuthenticatedAdminCitiesRoute,
   AuthenticatedAdminCountriesRoute: AuthenticatedAdminCountriesRoute,
+  AuthenticatedAdminFacilityRoute: AuthenticatedAdminFacilityRoute,
   AuthenticatedAdminLocationsRoute: AuthenticatedAdminLocationsRoute,
 }
 

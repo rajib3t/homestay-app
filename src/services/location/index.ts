@@ -26,7 +26,7 @@ export const fetchCountries = async (
   sort_order?: string,
   filter?: SearchParams
 ) => {
-  let queryParams = `?page=${page}&limit=${limit}`;
+  let queryParams = `?page=${page}&size=${limit}`;
 
   if (sort) {
     queryParams += `&sort=${encodeURIComponent(sort)}`;
@@ -139,7 +139,7 @@ export const createLocation = async (payload: CreateLocationDTO) => {
 }
 
 export const updateLocation = async (id: string | number, payload: Partial<Location>) => {
-  return protectedApi.patch<ApiResponse<Location>>(`/locations/update/${id}`, payload);
+  return protectedApi.patch<ApiResponse<Location>>(`/locations/location/${id}`, payload);
 }
 
 export const fetch_city_by_country = async (country: string) => {

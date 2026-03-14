@@ -18,8 +18,10 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as publicLayoutRouteImport } from './routes/(public)/_layout'
 import { Route as authLayoutRouteImport } from './routes/(auth)/_layout'
 import { Route as publicLayoutIndexRouteImport } from './routes/(public)/_layout/index'
+import { Route as AuthenticatedAdminLocationsRouteImport } from './routes/_authenticated/_admin/locations'
 import { Route as AuthenticatedAdminCountriesRouteImport } from './routes/_authenticated/_admin/countries'
 import { Route as AuthenticatedAdminCitiesRouteImport } from './routes/_authenticated/_admin/cities'
+import { Route as publicLayoutAboutRouteImport } from './routes/(public)/_layout/about'
 import { Route as authLayoutLoginRouteImport } from './routes/(auth)/_layout/login'
 
 const TestHeadRoute = TestHeadRouteImport.update({
@@ -64,6 +66,12 @@ const publicLayoutIndexRoute = publicLayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => publicLayoutRoute,
 } as any)
+const AuthenticatedAdminLocationsRoute =
+  AuthenticatedAdminLocationsRouteImport.update({
+    id: '/locations',
+    path: '/locations',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminCountriesRoute =
   AuthenticatedAdminCountriesRouteImport.update({
     id: '/countries',
@@ -76,6 +84,11 @@ const AuthenticatedAdminCitiesRoute =
     path: '/cities',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const publicLayoutAboutRoute = publicLayoutAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => publicLayoutRoute,
+} as any)
 const authLayoutLoginRoute = authLayoutLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -88,8 +101,10 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/login': typeof authLayoutLoginRoute
+  '/about': typeof publicLayoutAboutRoute
   '/cities': typeof AuthenticatedAdminCitiesRoute
   '/countries': typeof AuthenticatedAdminCountriesRoute
+  '/locations': typeof AuthenticatedAdminLocationsRoute
   '/': typeof publicLayoutIndexRoute
 }
 export interface FileRoutesByTo {
@@ -98,8 +113,10 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/login': typeof authLayoutLoginRoute
+  '/about': typeof publicLayoutAboutRoute
   '/cities': typeof AuthenticatedAdminCitiesRoute
   '/countries': typeof AuthenticatedAdminCountriesRoute
+  '/locations': typeof AuthenticatedAdminLocationsRoute
   '/': typeof publicLayoutIndexRoute
 }
 export interface FileRoutesById {
@@ -113,8 +130,10 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/(auth)/_layout/login': typeof authLayoutLoginRoute
+  '/(public)/_layout/about': typeof publicLayoutAboutRoute
   '/_authenticated/_admin/cities': typeof AuthenticatedAdminCitiesRoute
   '/_authenticated/_admin/countries': typeof AuthenticatedAdminCountriesRoute
+  '/_authenticated/_admin/locations': typeof AuthenticatedAdminLocationsRoute
   '/(public)/_layout/': typeof publicLayoutIndexRoute
 }
 export interface FileRouteTypes {
@@ -125,8 +144,10 @@ export interface FileRouteTypes {
     | '/profile'
     | '/unauthorized'
     | '/login'
+    | '/about'
     | '/cities'
     | '/countries'
+    | '/locations'
     | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -135,8 +156,10 @@ export interface FileRouteTypes {
     | '/profile'
     | '/unauthorized'
     | '/login'
+    | '/about'
     | '/cities'
     | '/countries'
+    | '/locations'
     | '/'
   id:
     | '__root__'
@@ -149,8 +172,10 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/unauthorized'
     | '/(auth)/_layout/login'
+    | '/(public)/_layout/about'
     | '/_authenticated/_admin/cities'
     | '/_authenticated/_admin/countries'
+    | '/_authenticated/_admin/locations'
     | '/(public)/_layout/'
   fileRoutesById: FileRoutesById
 }
@@ -226,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof publicLayoutIndexRouteImport
       parentRoute: typeof publicLayoutRoute
     }
+    '/_authenticated/_admin/locations': {
+      id: '/_authenticated/_admin/locations'
+      path: '/locations'
+      fullPath: '/locations'
+      preLoaderRoute: typeof AuthenticatedAdminLocationsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/countries': {
       id: '/_authenticated/_admin/countries'
       path: '/countries'
@@ -240,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCitiesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/(public)/_layout/about': {
+      id: '/(public)/_layout/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof publicLayoutAboutRouteImport
+      parentRoute: typeof publicLayoutRoute
+    }
     '/(auth)/_layout/login': {
       id: '/(auth)/_layout/login'
       path: '/login'
@@ -253,11 +292,13 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCitiesRoute: typeof AuthenticatedAdminCitiesRoute
   AuthenticatedAdminCountriesRoute: typeof AuthenticatedAdminCountriesRoute
+  AuthenticatedAdminLocationsRoute: typeof AuthenticatedAdminLocationsRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCitiesRoute: AuthenticatedAdminCitiesRoute,
   AuthenticatedAdminCountriesRoute: AuthenticatedAdminCountriesRoute,
+  AuthenticatedAdminLocationsRoute: AuthenticatedAdminLocationsRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
@@ -294,10 +335,12 @@ const authLayoutRouteWithChildren = authLayoutRoute._addFileChildren(
 )
 
 interface publicLayoutRouteChildren {
+  publicLayoutAboutRoute: typeof publicLayoutAboutRoute
   publicLayoutIndexRoute: typeof publicLayoutIndexRoute
 }
 
 const publicLayoutRouteChildren: publicLayoutRouteChildren = {
+  publicLayoutAboutRoute: publicLayoutAboutRoute,
   publicLayoutIndexRoute: publicLayoutIndexRoute,
 }
 

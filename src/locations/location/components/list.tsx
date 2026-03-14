@@ -3,21 +3,21 @@ import { Button } from "@/components/ui/button";
 
 import { TableHead, TableCell } from '@/components/ui/table'
 
-import type { City } from "@/types/location";
+import type { City, Location } from "@/types/location";
 import type { PaginatedMeta } from "@/types/common";
-import  EditCityModal  from "@/locations/cities/components/edit";
+import  EditLocationModal  from "@/locations/location/components/edit";
 import CommonTable from "@/components/common/common-table";
 
-interface CityListProps {
-  data?: City[];
+interface LocationListProps {
+  data?: Location[];
   isLoading?: boolean;
   meta?: PaginatedMeta;
   
-  openEditCityModal: boolean;
-  setOpenEditCityModal?: (open: boolean) => void;
+  openEditLocationModal: boolean;
+  setOpenEditLocationModal?: (open: boolean) => void;
   onPageChange: (newPage: number) => void;
-  onEditModalOpen: (city: City) => Promise<City | void> | City | void;
-  onUpdateCity?: (updatedCity: City) => void;
+  onEditModalOpen: (location: Location) => Promise<Location | void> | Location | void;
+  onUpdateLocation?: (updatedLocation: Location) => void;
   
   onSortChange?: (sortBy: string, order: 'asc' | 'desc') => void;
   currentSort?: string | null;
@@ -26,15 +26,15 @@ interface CityListProps {
   
 }
 
-export const CityList: React.FC<CityListProps> = ({
+export const LocationList: React.FC<LocationListProps> = ({
   data,
   isLoading,
   meta,
   onPageChange,
-  openEditCityModal,
-  setOpenEditCityModal,
+  openEditLocationModal,
+  setOpenEditLocationModal,
   onEditModalOpen,
-  onUpdateCity,
+  onUpdateLocation,
  
   onSortChange,
   currentSort,
@@ -42,10 +42,10 @@ export const CityList: React.FC<CityListProps> = ({
   validationErrors,
   
 }) => {
-  const [selectedCity, setSelectedCity] = React.useState<City | null>(null);
+  const [selectedLocation, setSelectedLocation] = React.useState<Location | null>(null);
   
 
-
+    console.log("LocationList render", { data, isLoading, meta, currentSort, currentOrder, openEditLocationModal , onUpdateLocation, validationErrors, selectedLocation});
   return (
     <div className="flex flex-col gap-6 pb-6 border-b">
       <CommonTable
@@ -53,9 +53,9 @@ export const CityList: React.FC<CityListProps> = ({
         isLoading={isLoading}
         meta={meta}
         onPageChange={onPageChange}
-        keyExtractor={(c: City) => c.id}
-        loadingPlaceholder="Loading cities..."
-        emptyPlaceholder="No cities found."
+        keyExtractor={(c: Location) => c.id}
+        loadingPlaceholder="Loading locations..."
+        emptyPlaceholder="No locations found."
         renderHead={() => (
           <React.Fragment>
             <TableHead>
@@ -90,35 +90,29 @@ export const CityList: React.FC<CityListProps> = ({
               </Button>
             </TableHead>
 
-            <TableHead>Locations</TableHead>
-            <TableHead>Is Popular</TableHead>
+            <TableHead>City</TableHead>
+            
             <TableHead className="text-right">Action</TableHead>
           </React.Fragment>
         )}
-        renderRow={(city: City) => (
+        renderRow={(location: Location) => (
           <React.Fragment >
             <TableCell className="font-medium">
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 shadow-lg ring-4 ring-white">
-                    <img
-                      src={city.image || "placeholder.webp"}
-                      alt={city.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                
                   <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-white" />
                 </div>
 
                 <div className="flex flex-col">
-                  <span className=" text-slate-700">{city.name}</span>
+                  <span className=" text-slate-700">{location.name}</span>
                 </div>
               </div>
             </TableCell>
 
-            <TableCell>{city.country}</TableCell>
-            <TableCell>0</TableCell>
-            <TableCell>{city.is_popular ? "Yes" : "No"}</TableCell>
+            <TableCell>{location.country}</TableCell>
+            <TableCell>{location.city}</TableCell>
+            
 
             <TableCell className="text-right space-x-2">
               <Button
@@ -126,15 +120,15 @@ export const CityList: React.FC<CityListProps> = ({
                 variant="outline"
                 className="cursor-pointer"
                 onClick={async () => {
-                  const maybe = onEditModalOpen?.(city);
-                  let resolved: City | void;
+                  const maybe = onEditModalOpen?.(location);
+                  let resolved: Location | void;
                   if (maybe && typeof (maybe as any)?.then === 'function') {
-                    resolved = await (maybe as Promise<City | void>);
+                    resolved = await (maybe as Promise<Location | void>);
                   } else {
-                    resolved = maybe as City | void;
+                    resolved = maybe as Location | void;
                   }
-                  setSelectedCity((resolved as City) || city);
-                  if (setOpenEditCityModal) setOpenEditCityModal(true);
+                  setSelectedLocation((resolved as Location) || location);
+                  if (setOpenEditLocationModal) setOpenEditLocationModal(true);
                 }}
               >
                 Edit
@@ -144,27 +138,27 @@ export const CityList: React.FC<CityListProps> = ({
         )}
       />
 
-      {/* EDIT CITY MODAL */}
-      {openEditCityModal && selectedCity && (
+      {/* EDIT LOCATION MODAL */}
+      {openEditLocationModal && selectedLocation && (
         <React.Suspense fallback={
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="animate-pulse text-white text-lg">Loading...</div>
           </div>
         }>
-            <EditCityModal
-            city={selectedCity}
+            <EditLocationModal
+            location={selectedLocation}
             onOpenChange={(open: boolean) => {
-              if (setOpenEditCityModal) setOpenEditCityModal(open);
-              if (!open) setSelectedCity(null);
+              if (setOpenEditLocationModal) setOpenEditLocationModal(open);
+              if (!open) setSelectedLocation(null);
             }}
-            onSave={(updatedCity: City) => {
-              if (onUpdateCity) onUpdateCity(updatedCity);
+            onSave={(updatedLocation: Location) => {
+              if (onUpdateLocation) onUpdateLocation(updatedLocation);
             }}
             validationErrors={validationErrors}
           />
         </React.Suspense>
       )}
-      {/* END EDIT CITY MODAL */}
+      {/* END EDIT LOCATION MODAL */}
     </div>
   );
 }

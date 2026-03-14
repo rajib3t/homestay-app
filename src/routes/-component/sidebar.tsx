@@ -42,6 +42,7 @@ const menuItems: Array<{
     children: [
       { title: 'Countries', url: '/countries' },
       { title: 'Cities', url: '/cities' },
+      { title: 'Locations', url: '/locations' },
     ],
   },
   {

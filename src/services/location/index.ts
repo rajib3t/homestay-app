@@ -1,7 +1,7 @@
 import { protectedApi } from "@/lib/api";
 import type { ApiResponse } from "@/types/common";
 
-import type { CreateCountryDTO, Country, UpdateCountryDTO, CreateCityDTO, City, UpdateCityDTO } from "@/types/location";
+import type { CreateCountryDTO, Country, UpdateCountryDTO, CreateCityDTO, City, UpdateCityDTO, CreateLocationDTO, Location } from "@/types/location";
 
 
 export const createCountry = (payload: CreateCountryDTO) => {
@@ -50,14 +50,14 @@ export const fetchCountries = async (
   return response.data as ApiResponse<Country[]>;
 };
 
-export const fetchCountry = async (id: number) => {
+export const fetchCountry = async (id: string) => {
   const url = `/locations/country/${id}`;
   const res: any = await protectedApi.get<any>(url);
   const body = res && res.data ? res.data : res;
   const raw = body && body.data ? body.data : body;
 
   const mapped: Country = {
-    id: typeof raw.id === 'number' ? raw.id : raw.id,
+    id: typeof raw.id === 'number' ? String(raw.id) : raw.id,
     name: raw.name,
     code: raw.code,
     dial_code: raw.dial_code != null ? `+${raw.dial_code}` : (raw.dial_code ?? ''),
@@ -111,7 +111,7 @@ export const fetchCity = async (id: string) => {
   const raw = body && body.data ? body.data : body;
 
   const mapped: City = {
-    id: raw.id,
+    id: typeof raw.id === 'number' ? String(raw.id) : raw.id,
     name: raw.name,
     country: raw.country,
     is_popular: raw.is_popular === true || raw.is_popular === 'true',
@@ -131,3 +131,50 @@ export const updateCity = async (id: string, payload: UpdateCityDTO) => {
   const { name, country, is_popular, image } = payload;
   return protectedApi.patch<ApiResponse<City>>(`/locations/city/${id}`, { name, country: country, is_popular, image });
 };
+
+
+export const createLocation = async (payload: CreateLocationDTO) => {
+  const { name, country, city } = payload;
+  return protectedApi.post<ApiResponse<Location>>('/locations/create', { name, country, city });
+}
+
+export const updateLocation = async (id: string | number, payload: Partial<Location>) => {
+  return protectedApi.patch<ApiResponse<Location>>(`/locations/update/${id}`, payload);
+}
+
+export const fetch_city_by_country = async (country: string) => {
+  const url = `/locations/country/${encodeURIComponent(country)}/cities`;
+  const response = await protectedApi.get<ApiResponse<City[]>>(url);
+  return response.data as unknown as ApiResponse<City[]>;
+}
+
+export const fetchLocations = async (page: number, limit: number, sort?: string, sort_order?: string, filter?: SearchParams) => {
+    let queryParams = `?page=${page}&size=${limit}`;
+
+    if (sort) {
+      queryParams += `&sort=${encodeURIComponent(sort)}`;
+    }
+
+    if (sort_order) {
+      queryParams += `&sort_order=${encodeURIComponent(sort_order)}`;
+    }
+
+    if (filter?.filter && filter.filter.length > 0) {
+      filter.filter.forEach((item) => {
+        if (!item?.search_field || !item?.search_value) return;
+        queryParams += `&${encodeURIComponent(item.search_field)}=${encodeURIComponent(item.search_value)}`;
+      });
+    }
+
+    const url = `/locations/locations${queryParams}`;
+    const response = await protectedApi.get<ApiResponse<Location[]>>(url);
+
+    return response.data as unknown as ApiResponse<Location[]>;
+}
+
+export const fetchLocation = async (id: string) => {
+    const url = `/locations/location/${id}`;
+    const res = await protectedApi.get<Location>(url);
+    
+    return res.data as unknown as ApiResponse<Location>;
+}

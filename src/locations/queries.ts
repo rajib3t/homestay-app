@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query"
 import type { SearchParams } from "@/types/common"
-import { fetchCities, fetchCity, fetchCountries, fetchCountry } from "@/services/location"
+import { fetch_city_by_country, fetchCities, fetchCity, fetchCountries, fetchCountry, fetchLocation, fetchLocations } from "@/services/location"
 
 export const getCountriesQuery = (page: number, limit: number, sort?: string, sort_order?: string, filter?: SearchParams) => () =>
    queryOptions({
@@ -26,3 +26,22 @@ export const getCityQuery = (id: string) => () =>
       queryKey: ["GET_CITY", id],
       queryFn: () => fetchCity(id),
    })
+
+export const getCitiesByCountryQuery = (country: string) => () =>
+   queryOptions({
+      queryKey: ["GET_CITIES_BY_COUNTRY", country],
+      queryFn: () => fetch_city_by_country(country),
+   })
+
+export const getLocationsQuery = (page: number, limit: number, sort?: string, sort_order?: string, filter?: SearchParams) => () =>
+   queryOptions({
+      queryKey: ["GET_LOCATIONS", page, limit, sort, sort_order, filter],
+      queryFn: () => fetchLocations(page, limit, sort, sort_order, filter),
+   })
+
+   export const getLocationQuery = (id: string ) => () =>
+   queryOptions({
+      queryKey: ["GET_LOCATION", id],
+      queryFn: () => fetchLocation(id),
+   })
+

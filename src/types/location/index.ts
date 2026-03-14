@@ -46,3 +46,17 @@ export interface City {
     is_popular: boolean;
     image?: string | null;
 }
+
+
+export interface CreateLocationDTO {
+    name: string;
+    country: string;
+    city: string;
+}
+
+export interface Location {
+    id: string;
+    name: string;
+    country: string;
+    city: string;
+}

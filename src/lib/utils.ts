@@ -81,9 +81,13 @@ export function parseValidationErrors(err: any): Record<string, string[]> {
   const details = err?.details ?? err?.errors ?? err?.response?.data?.details ?? null
   if (Array.isArray(details)) {
     details.forEach((d: any) => {
-      const loc = Array.isArray(d.loc) ? d.loc : null
-      const field = loc ? loc[loc.length - 1] : '_base'
-      const msg = d.msg || d.message || String(d)
+      // Support multiple shapes:
+      // - { loc: [...], msg: '...' } (fastapi/pydantic)
+      // - { field: 'code', message: '...' } (custom backend)
+      // - { msg: '...', message: '...' }
+      const fieldFromLoc = Array.isArray(d.loc) ? d.loc[d.loc.length - 1] : null
+      const field = d.field ?? fieldFromLoc ?? d.name ?? '_base'
+      const msg = d.msg || d.message || d.msgs || String(d)
       if (!map[field]) map[field] = []
       map[field].push(msg)
     })
@@ -101,8 +105,59 @@ export function parseValidationErrors(err: any): Record<string, string[]> {
         if (Array.isArray(val)) map[k] = val.map(String)
         else if (typeof val === 'string') map[k] = [val]
       })
+      // If the API returned only generic keys (like message/error_code/status),
+      // try to infer a field so UI can show per-field errors.
+      const keys = Object.keys(map)
+      const onlyGenericKeys = keys.length > 0 && keys.every(k => ['message', 'status', 'error_code'].includes(k))
+
+      if (onlyGenericKeys) {
+        const topMessage = (candidate.message ?? candidate.msg ?? map.message?.[0] ?? '').toString()
+        const topErrorCode = (candidate.error_code ?? candidate.code ?? '').toString()
+
+        // First try to derive field from structured `error_code` like COUNTRY_CODE_EXISTS
+        const codeMatch = topErrorCode.match(/([A-Z_]+?)_EXISTS$/i)
+        if (codeMatch) {
+          const token = codeMatch[1].toLowerCase() // e.g. COUNTRY_CODE -> country_code or CODE -> code
+          // strip common prefixes like country_ to get the field token
+          const stripped = token.replace(/^(country_|location_|city_)/, '')
+          const candidateField = stripped
+          if (candidateField) return { [candidateField]: [topMessage || topErrorCode || 'Validation error'] }
+        }
+
+        // Infer field by scanning message/error_code for known field tokens
+        const knownFields = ['name', 'code', 'dial_code', 'country', 'city', 'image', 'is_popular']
+        const haystack = (topErrorCode + ' ' + topMessage).toLowerCase()
+        for (const f of knownFields) {
+          if (haystack.includes(f.toLowerCase())) return { [f]: [topMessage || topErrorCode || 'Validation error'] }
+        }
+
+        // If message mentions "already exists" without a field, prefer 'name' for duplicates
+        if (/already exist(s)?/i.test(topMessage) || /already exist(s)?/i.test(topErrorCode)) {
+          return { name: [topMessage || 'Already exists'] }
+        }
+
+        // If message mentions max length, try to attach to 'code' if it references characters
+        if (/String should have at most .* characters/i.test(topMessage) || /at most \d+ characters/i.test(topMessage)) {
+          return { code: [topMessage] }
+        }
+
+        if (topMessage) return { _base: [topMessage] }
+      }
+
       if (Object.keys(map).length) return map
     }
+  }
+
+  // Development-only debug: if we couldn't map any fields, log the raw error
+  try {
+    // Vite exposes import.meta.env.DEV; guard for non-Vite environments
+    const isDev = typeof import.meta !== 'undefined' ? (import.meta as any)?.env?.DEV : false
+    if (isDev && typeof window !== 'undefined' && Object.keys(map).length === 0) {
+      // eslint-disable-next-line no-console
+      console.debug('parseValidationErrors: unable to map error shape', err)
+    }
+  } catch (e) {
+    // ignore
   }
 
   // 3) Fallback: single message (string) -> assign to _base or try to infer field

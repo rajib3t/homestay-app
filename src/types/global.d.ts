@@ -50,6 +50,11 @@ declare global {
         search_field?: string;
         search_value?: string | number | boolean | null;
     }
+
+    interface SortOption{
+        label: string;
+        value: string;
+    }
 }
 
 export {};

@@ -6,3 +6,4 @@ export type PaginatedMeta = globalThis.PaginatedMeta;
 export type SearchParams = globalThis.SearchParams;
 export type Filter = globalThis.Filter;
 export type RouteSearch = globalThis.RouteSearch;
+export type SortOption = globalThis.SortOption;

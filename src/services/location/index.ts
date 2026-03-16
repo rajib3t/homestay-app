@@ -30,10 +30,14 @@ export const fetchCountries = async (
 
   if (sort) {
     queryParams += `&sort=${encodeURIComponent(sort)}`;
+  }else{
+    queryParams += `&sort=created_at`;
   }
 
   if (sort_order) {
     queryParams += `&sort_order=${encodeURIComponent(sort_order)}`;
+  }else{
+    queryParams += `&sort_order=desc`;
   }
 
   if (filter?.filter && filter.filter.length > 0) {

@@ -8,9 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import type { Filter , SortOption} from "@/types/common"
-
-
+import type { Filter, SortOption } from "@/types/common"
 
 interface Props {
   onSearch?: (filter?: Filter) => void
@@ -21,7 +19,7 @@ interface Props {
   sortOptions?: SortOption[]
 }
 
-export default function CountriesSearch({
+export default function AmenitiesSearch({
   onSearch,
   onSortChange,
   initialField = "name",
@@ -77,7 +75,6 @@ export default function CountriesSearch({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="name">Name</SelectItem>
-            <SelectItem value="code">Code</SelectItem>
           </SelectContent>
         </Select>
 
@@ -85,7 +82,7 @@ export default function CountriesSearch({
           placeholder="Search by value..."
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          aria-label="Search countries by field"
+          aria-label="Search amenities by field"
         />
       </div>
 
@@ -125,5 +122,3 @@ export default function CountriesSearch({
     </form>
   )
 }
-
-

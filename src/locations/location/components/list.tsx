@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 import { TableHead, TableCell } from '@/components/ui/table'
 
-import type { City, Location } from "@/types/location";
+import type { Location } from "@/types/location";
 import type { PaginatedMeta } from "@/types/common";
 import  EditLocationModal  from "@/locations/location/components/edit";
 import CommonTable from "@/components/common/common-table";

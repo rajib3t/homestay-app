@@ -154,6 +154,7 @@ function RouteComponent() {
        setValidationErrors({})
        try {
          await updateLocation(updatedLocation.id, updatedLocation as Partial<Location>);
+         queryClient.invalidateQueries({ queryKey: ["GET_LOCATION", String(updatedLocation.id)] });
          queryClient.invalidateQueries({ queryKey: ["GET_LOCATIONS", page, limit] });
          setOpenEditLocationModal(false);
        } catch (err: any) {

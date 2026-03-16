@@ -5,6 +5,8 @@ import { AppSidebar } from './-component/sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 import { fetchUserProfile } from '@/services/profile';
+import { queryClient } from '@/lib/query-client';
+import { GET_PROFILE_KEY } from '@/hooks/use-profile';
 
 import { ErrorView } from '@/components/error-pages/error-view';
 
@@ -28,8 +30,14 @@ export const Route = createFileRoute('/_authenticated')({
         
     },
     loader: async () => {
-    const profile = await fetchUserProfile()
-    return profile
+    await queryClient.ensureQueryData({
+      queryKey: GET_PROFILE_KEY,
+      queryFn: async () => {
+        const resp = await fetchUserProfile()
+        return resp.data
+      },
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    })
   },
   component: RouteComponent,
   errorComponent: () => (

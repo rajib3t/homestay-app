@@ -98,7 +98,7 @@ export const CountryList: React.FC<CountryListProps> = ({
             <TableCell>{country.dial_code}</TableCell>
             <TableCell>{country.city_count ?? 0}</TableCell>
             <TableCell>
-              <Badge variant={country.status ? "default" : "secondary"}>
+              <Badge className={country.status ? "bg-green-500" : "bg-red-500"}>
                 {country.status ? "Active" : "Inactive"}
               </Badge>
             </TableCell>
@@ -117,8 +117,7 @@ export const CountryList: React.FC<CountryListProps> = ({
 
               <Button
                 size="sm"
-                variant={country.status ? "destructive" : "default"}
-                className="cursor-pointer"
+                className={`cursor-pointer ${country.status ? "bg-red-500" : "bg-green-500"}`}
                 onClick={() => {
                   if (openStatusChangeModal) {
                     openStatusChangeModal(country);

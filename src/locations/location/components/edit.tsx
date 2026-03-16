@@ -1,4 +1,4 @@
-import React,{useEffect} from "react";
+import React from "react";
 import type { Location } from "@/types/location";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

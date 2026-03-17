@@ -14,14 +14,11 @@ export interface CreateCountryDTO {
     dial_code: string;
 }
 
-export interface CreateCityDTO {
+export interface CityDTO {
     name: string;
-    // frontend may provide either the country name or an id; backend expects `country` name
-    country?: string;
-    country_id?: string; // kept for compatibility with existing components
-    is_popular?: boolean;
-    // image can be a base64 string or a File when uploading
-    image?: string | File | null;
+    country: string;
+    is_popular: boolean;
+    image: string 
 }
 
 export interface UpdateCityDTO {

@@ -1,207 +1,316 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { X, UploadCloudIcon } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import React from "react"
 import type { City } from "@/types/location";
+import type { ReactFormExtendedApi } from "@tanstack/react-form";
+import type { CityDTO } from "@/types/location";
+import { Button } from "@/components/ui/button";
+import { X , UploadCloudIcon} from "lucide-react";
+import { Field, FieldError } from "@/components/ui/field";
+import  SearchableSelect  from "@/components/ui/searchable-select";
 import { Label } from "@/components/ui/label";
-import SearchableSelect from "@/components/ui/searchable-select";
-import { getCountriesQuery } from "@/locations/queries";
+import { Input } from "@/components/ui/input";
 import { fetchCountries } from "@/services/location";
-
-interface EditCityModalProps {
-  city: City;
-  onOpenChange: (open: boolean) => void;
-  onSave: (updatedCity: City) => void;
-  validationErrors?: Record<string, string[]>;
+import { getCountriesQuery } from "@/locations/queries";
+import type { SearchParams } from "@/types/common";
+import type { AnyFieldApi } from "@tanstack/react-form";
+interface CityEditProps {
+  data: City;
+  open: boolean;
+  form: ReactFormExtendedApi<CityDTO, any, any, any, any, any, any, any, any, any, any, any>;
+   onOpenChange: (open: boolean) => void;
+   validationErrors?: Record<string, string[]>
 }
 
-const EditCityModal: React.FC<EditCityModalProps> = ({ city, onOpenChange, onSave, validationErrors }) => {
-  const [form, setForm] = React.useState<City>({ ...city });
-  const [imagePreview, setImagePreview] = React.useState<string | null>(city.image ?? null);
+const CityEdit: React.FC<CityEditProps> = ({ data, open, onOpenChange, form, validationErrors }) => {
+  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
   
-  React.useEffect(() => {
-    setForm({ ...city });
-    setImagePreview(city.image ?? null);
-  }, [city]);
-
-  const handleChange = (field: keyof City, value: any) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    if (field === 'country' && value !== form.country) {
-      // Clear city selection if country changes
-      setForm(prev => ({ ...prev, name: '' }));
-    }
-  };
-
-  const handleImageChange = (file?: File) => {
-    if (!file) {
-      setForm(prev => ({ ...prev, image: null }));
-      setImagePreview(null);
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      setImagePreview(result);
-      setForm(prev => ({ ...prev, image: result }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const [countryOptions, setCountryOptions] = React.useState<{ value: string | number; label: string }[]>([]);
-
-  React.useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const filterObj = { filter: [ {search_field: 'status', search_value: true}] } as SearchParams;
-        const opts = getCountriesQuery(1, 100, '', '', filterObj)();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCountries(1, 100, '', '', filterObj);
-        if (!mounted) return;
-        const items = res?.data ?? [];
-        setCountryOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
-      } catch (err) {
-        // ignore
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
-
+    React.useEffect(() => {
+      if (open) setImagePreview(null);
+      if( data.image) setImagePreview(data.image);
+    }, [open])
+    const [countryOptions, setCountryOptions] = React.useState<{ value: string | number; label: string }[]>([]);
+    React.useEffect(() => {
+        // load initial country list
+        let mounted = true;
+        (async () => {
+          try {
+            const filterObj = { filter: [ {search_field: 'status', search_value: true}] } as SearchParams;
+            const opts = getCountriesQuery(1, 100, '', '', filterObj)();
+            // QueryFn may be typed to expect a context; call safely and fallback to fetchCountries
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCountries(1, 100, '', '', filterObj);
+            if (!mounted) return;
+            const items = res?.data ?? [];
+            setCountryOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
+          } catch (err) {
+            // ignore
+          }
+        })();
+        return () => { mounted = false; };
+      }, []);
+      if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <React.Fragment>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="w-full max-w-lg bg-white rounded-xl shadow-xl p-6 relative">
-        <button
-          onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 text-gray-500 hover:text-black cursor-pointer"
-        >
-          <X size={18} />
-        </button>
+          <Button
+            variant={"ghost"}
+            onClick={() => onOpenChange(false)}
+            className="absolute right-4 top-4 text-gray-500 hover:text-black cursor-pointer"
+          >
+            <X size={18} />
+          </Button>
 
-        <h2 className="text-xl font-semibold mb-6">Edit City</h2>
-
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const payload: City = {
-              ...form,
-              id: city.id,
-              country: form.country === "" ? null as any : form.country,
-            };
-            onSave(payload);
-          }}
-        >
-          <div>
-            <label className="text-sm font-medium">Image</label>
-            <div className="mt-2 mb-2">
-              <div className="w-full h-48 bg-gray-50 rounded-md border border-gray-200 flex items-center justify-center">
-                {imagePreview ? (
-                  // eslint-disable-next-line jsx-a11y/img-redundant-alt
-                  <img src={imagePreview} alt="city preview" className="object-cover w-full h-full rounded-md" />
-                ) : (
-                  <div className="text-muted-foreground flex flex-col items-center">
-                    <span>300×400</span>
-                  </div>
-                )}
-              </div>
-              <div className="relative mt-2">
-                <Label className="flex items-center justify-center gap-2 border rounded-md px-4 py-2 cursor-pointer hover:bg-gray-50">
-                  <UploadCloudIcon className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm">Upload Image</span>
-
-                  <input
-                    type="file"
-                    accept="image/png, image/jpeg, image/webp, image/jpg"
-                    className="hidden"
-                    onChange={(e) => handleImageChange(e.target.files?.[0])}
-                  />
-                </Label>
-              </div>
-              {validationErrors?.image && (
-                <p className="text-sm text-red-600 mt-1">{validationErrors.image.join(', ')}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium">Country</Label>
-            <div className="mt-2">
-              <SearchableSelect
-                options={countryOptions}
-                value={form.country}
-                onChange={(v) => handleChange("country", v)}
-                placeholder="Select One"
-                onSearch={async (q: string) => {
-                  try {
-                    let filterObj: SearchParams | undefined;
-                    if (q) {
-                      filterObj = { filter: [ { search_field: 'name', search_value: q }, { search_field: 'status', search_value: true } ] };
-                    } else {
-                      filterObj = { filter: [ { search_field: 'status', search_value: true } ] };
-                    }
-                    const opts = getCountriesQuery(1, 100, undefined, undefined, filterObj)();
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCountries(1, 100, undefined, undefined, filterObj);
-                    const items = res?.data ?? [];
-                    return items.map((c: any) => ({ value: c.id, label: c.name }));
-                  } catch (err) {
-                    return [];
-                  }
+            <h2 className="text-xl font-semibold mb-6">
+              Edit City
+            </h2>
+            <form
+                onSubmit={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                form.handleSubmit()
                 }}
-              />
-            </div>
-            {validationErrors?.country && (
-              <p className="text-sm text-red-600 mt-1">{validationErrors.country.join(', ')}</p>
-            )}
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium">Name</Label>
-            <Input
-              placeholder="City name"
-              value={form.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange("name", e.target.value)}
-            />
-            {validationErrors?.name && (
-              <p className="text-sm text-red-600 mt-1">{validationErrors.name.join(', ')}</p>
-            )}
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium">Is Popular</Label>
-            <div className="mt-2">
-              <Label className="inline-flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={!!form.is_popular}
-                  onChange={(e) => handleChange("is_popular", e.target.checked)}
-                />
-                <span className="ml-2">Mark as popular</span>
-              </Label>
-            </div>
-            {validationErrors?.is_popular && (
-              <p className="text-sm text-red-600 mt-1">{validationErrors.is_popular.join(', ')}</p>
-            )}
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="cursor-pointer"
-              onClick={() => onOpenChange(false)}
             >
-              Cancel
-            </Button>
+              <div>
+                   <form.Field
+                        name="image"
+                        validators={{
+                        onChange: ({ value }: { value: File | null }) =>
+                            !value ? 'An image is required' : undefined,
+                        }}
+                        children={(field: AnyFieldApi ) => {
+                            const apiErrors = validationErrors?.[field.name] ?? [];
+                            const isInvalid =
+                              (field.state.meta.isTouched && !field.state.meta.isValid) ||
+                              apiErrors.length > 0
+                            return (
+                            <React.Fragment>
+                                <Field data-invalid={isInvalid}>
+                                <Label className="text-sm font-medium">Image</Label>
+                                <div className="w-full h-64 bg-gray-50 rounded-md border border-gray-200 flex items-center justify-center">
+                                {imagePreview ? (
+                                    <img src={imagePreview} alt="image preview" className="object-cover w-full h-full rounded-md" />
+                                ) : (
+                                    <div className="text-muted-foreground flex flex-col items-center">
+                                    <span>300×400</span>
+                                    </div>
+                                )}
+                                </div>
+                                <div className="relative mt-2">
+                                <Label className="flex items-center justify-center gap-2 border rounded-md px-4 py-2 cursor-pointer hover:bg-gray-50">
+                                    <UploadCloudIcon className="w-4 h-4 text-gray-600" />
+                                    <span className="text-sm">Upload Image</span>
+                                    <Input
+                                        className="hidden"
+                                        type="file"
+                                        accept="image/*"
+                                        id={field.name}
+                                        name={field.name}
+                                        // ✅ NO value prop — file inputs must be uncontrolled
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onload = () => {
+                                                const result = reader.result as string;
+                                                setImagePreview(result);
+                                                 field.handleChange(result); // ✅ store the File object, not file.name
+                                                };
+                                                reader.readAsDataURL(file);
+                                               
+                                                
+                                            }
+                                        }}
+                                    />
+                                </Label>
+                                </div>
+                                {isInvalid && (
+                                    <FieldError errors={[
+                                      ...field.state.meta.errors.map((e) => e ? { message: String(e) } : undefined),
+                                      ...apiErrors.map((e) => ({ message: e })),
+                                    ]} />
+                                    )}
+                                </Field>
+                            </React.Fragment>
+                            )
+                        }}
+                    />
+                </div>
+                <div>
+                    <form.Field
+                        name="country"
+                        validators={{
+                        onChange: ({ value }: { value: string }) =>
+                            !value ? 'Country is required' : undefined,
+                        }}
+                        children={(field: AnyFieldApi ) => {
+                            const apiErrors = validationErrors?.[field.name] ?? [];
+                            const isInvalid =
+                              (field.state.meta.isTouched && !field.state.meta.isValid) ||
+                              apiErrors.length > 0
+                            return (
+                            <React.Fragment>
+                                <Field data-invalid={isInvalid}>
+                                  <Label className="text-sm font-medium">Country</Label>
+                                    <div className="mt-2">
+                                      <SearchableSelect
+                                        id={field.name}
+                                        name={field.name}
+                                        options={countryOptions}
+                                        value={data.country}
+                                        onChange={(e) => {
+                                          
+                                          field.handleChange(e);
+                                        }}
+                                        placeholder="Select One"
+                                        onSearch={async (q: string) => {
+                                          try {
+                                            let filterObj: SearchParams | undefined;
+                                            if (q) {
+                                              filterObj = { filter: [ { search_field: 'name', search_value: q }, { search_field: 'status', search_value: true } ] };
+                                            } else {
+                                              filterObj = { filter: [ { search_field: 'status', search_value: true } ] };
+                                            }
+                                            const opts = getCountriesQuery(1, 100, undefined, undefined, filterObj)();
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCountries(1, 100, undefined, undefined, filterObj);
+                                            const items = res?.data ?? [];
+                                            return items.map((c: any) => ({ value: c.id, label: c.name }));
+                                          } catch (err) {
+                                            return [];
+                                          }
+                                        }}
+                                      />
+                                    </div>
+                                </Field>
+                                </React.Fragment>
+                            )
+                        }}
+                    />
 
-            <Button type="submit" className="cursor-pointer">
-              Save City
-            </Button>
+                    
+                </div>
+                <div>
+                    <form.Field 
+                            name="name"
+                            validators={{
+                    onChange: ({ value }: { value: string }) =>
+                        !value
+                        ? 'Name is required'
+                        : value.length < 3
+                            ? 'Name must be at least 3 characters'
+                            : undefined,
+                    onChangeAsyncDebounceMs: 500,
+                    onChangeAsync: async ({ value }: { value: string }) => {
+                        await new Promise((resolve) => setTimeout(resolve, 1000))
+                        return (
+                        value.includes('error') && 'No "error" allowed in name'
+                        )
+                    },
+                    }}
+                      children={(field: AnyFieldApi ) => {
+                        const apiErrors = validationErrors?.[field.name] ?? [];
+                        const isInvalid =
+                          (field.state.meta.isTouched && !field.state.meta.isValid) ||
+                          apiErrors.length > 0
+                        
+                        return (
+                            <React.Fragment>
+                                <Field data-invalid={isInvalid}>
+                                <Label className="text-sm font-medium">Name</Label>
+                                <Input
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                            field.handleChange(e.target.value)
+                            }}
+                                    
+                                />
+                                {isInvalid && (
+                                    <FieldError errors={[
+                                      ...field.state.meta.errors.map((e) => e ? { message: String(e) } : undefined),
+                                      ...apiErrors.map((e) => ({ message: e })),
+                                    ]} />
+                                    )}
+                                </Field>
+                            </React.Fragment>
+                        )
+                      }}
+                    />
+
+                    
+                </div>
+                <div>
+                    <form.Field
+                        name={"is_popular"}
+                        validators={{}}
+                        children={(field: AnyFieldApi ) => {
+                            const apiErrors = validationErrors?.[field.name] ?? [];
+                            const isInvalid =
+                              (field.state.meta.isTouched && !field.state.meta.isValid) ||
+                              apiErrors.length > 0
+                            return (
+                            <React.Fragment>
+                                <Field data-invalid={isInvalid} className="flex items-center gap-2">
+                                  <Label className="text-sm font-medium">Is Popular</Label>
+                                    <div className="mt-2">
+                                      <Label className="inline-flex items-center gap-2">
+                                        <input
+                                          type="checkbox"
+                                          checked={field.state.value}
+                                          onChange={(e) => {
+                                            field.handleChange(e.target.checked);
+                                          }}
+                                        />
+                                        {isInvalid && (
+                                            <FieldError errors={[
+                                              ...field.state.meta.errors.map((e) => e ? { message: String(e) } : undefined),
+                                              ...apiErrors.map((e) => ({ message: e })),
+                                            ]} />
+                                            )}
+                            
+                                        
+                                        <span className="ml-2">Mark as popular</span>
+                                      </Label>
+                                    </div>
+                                </Field>
+                            </React.Fragment>
+                            )
+                        }}
+                    />
+                </div>
+               
+                <div className="flex justify-end gap-3 pt-4">
+                    <form.Subscribe
+                        selector={(state: { canSubmit: boolean; isSubmitting: boolean }): [boolean, boolean] => [state.canSubmit, state.isSubmitting]}
+                        children={([canSubmit, isSubmitting]: [boolean, boolean]) => (
+                            <React.Fragment>
+                                <Button
+                                    className="cursor-pointer"
+                                    variant={"outline"}
+                                    type="reset"
+                                    onClick={(e) => {
+                                        setImagePreview(null)
+                                        e.preventDefault()
+                                        form.reset()
+                                    }}
+                                >
+                                    Reset
+                                </Button>
+                                <Button className="cursor-pointer" type="submit" disabled={!canSubmit}>
+                                    {isSubmitting ? '...' : 'Add Amenity'}
+                                </Button>
+                            </React.Fragment>
+                        )}
+                    />
+                  </div>
+          </form>
           </div>
-        </form>
       </div>
-    </div>
+    </React.Fragment>
   );
-};
+}
 
-export default EditCityModal;
+export default CityEdit;

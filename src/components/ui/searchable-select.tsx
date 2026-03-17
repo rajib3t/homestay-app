@@ -6,6 +6,8 @@ interface Option {
 }
 
 interface SearchableSelectProps {
+  id?: string;
+  name?: string;
   options?: Option[];
   value?: string | number;
   onChange: (value: string) => void;
@@ -14,7 +16,7 @@ interface SearchableSelectProps {
   onSearch?: (query: string) => Promise<Option[]>; // optional async loader
 }
 
-const SearchableSelect: React.FC<SearchableSelectProps> = ({ options = [], value, onChange, placeholder = "Search...", className = "", onSearch }) => {
+const SearchableSelect: React.FC<SearchableSelectProps> = ({ id, name, options = [], value, onChange, placeholder = "Search...", className = "", onSearch }) => {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const [filtered, setFiltered] = React.useState<Option[]>(options);
@@ -63,6 +65,8 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ options = [], value
         onClick={() => { setOpen(true); }}
       >
         <input
+          id={id }
+          name={name }
           className="flex-1 outline-none"
           placeholder={selectedLabel || placeholder}
           value={query}
@@ -81,7 +85,9 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ options = [], value
               <div
                 key={String(opt.value)}
                 className="px-3 py-2 cursor-pointer hover:bg-gray-100"
-                onClick={() => { onChange(String(opt.value)); setOpen(false); setQuery(opt.label); }}
+                onClick={() => { 
+                  
+                  onChange(String(opt.value)); setOpen(false); setQuery(opt.label); }}
               >
                 {opt.label}
               </div>

@@ -5,7 +5,7 @@ import { TableHead, TableCell } from '@/components/ui/table'
 
 import type { City } from "@/types/location";
 import type { PaginatedMeta } from "@/types/common";
-import  EditCityModal  from "@/locations/cities/components/edit";
+// import  EditCityModal  from "@/locations/cities/components/edit";
 import CommonTable from "@/components/common/common-table";
 
 interface CityListProps {
@@ -13,11 +13,11 @@ interface CityListProps {
   isLoading?: boolean;
   meta?: PaginatedMeta;
   
-  openEditCityModal: boolean;
-  setOpenEditCityModal?: (open: boolean) => void;
+ 
+  onEditCity?: (city: City) => void;
   onPageChange: (newPage: number) => void;
-  onEditModalOpen: (city: City) => Promise<City | void> | City | void;
-  onUpdateCity?: (updatedCity: City) => void;
+ 
+ 
   
   onSortChange?: (sortBy: string, order: 'asc' | 'desc') => void;
   currentSort?: string | null;
@@ -31,18 +31,18 @@ export const CityList: React.FC<CityListProps> = ({
   isLoading,
   meta,
   onPageChange,
-  openEditCityModal,
-  setOpenEditCityModal,
-  onEditModalOpen,
-  onUpdateCity,
+  
+
+ 
  
   onSortChange,
+  onEditCity,
   currentSort,
   currentOrder,
-  validationErrors,
+  
   
 }) => {
-  const [selectedCity, setSelectedCity] = React.useState<City | null>(null);
+ 
   
 
 
@@ -125,17 +125,7 @@ export const CityList: React.FC<CityListProps> = ({
                 size="sm"
                 variant="outline"
                 className="cursor-pointer"
-                onClick={async () => {
-                  const maybe = onEditModalOpen?.(city);
-                  let resolved: City | void;
-                  if (maybe && typeof (maybe as any)?.then === 'function') {
-                    resolved = await (maybe as Promise<City | void>);
-                  } else {
-                    resolved = maybe as City | void;
-                  }
-                  setSelectedCity((resolved as City) || city);
-                  if (setOpenEditCityModal) setOpenEditCityModal(true);
-                }}
+                onClick={() => onEditCity?.(city)}
               >
                 Edit
               </Button>
@@ -145,7 +135,7 @@ export const CityList: React.FC<CityListProps> = ({
       />
 
       {/* EDIT CITY MODAL */}
-      {openEditCityModal && selectedCity && (
+      {/* {openEditCityModal && selectedCity && (
         <React.Suspense fallback={
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="animate-pulse text-white text-lg">Loading...</div>
@@ -163,7 +153,7 @@ export const CityList: React.FC<CityListProps> = ({
             validationErrors={validationErrors}
           />
         </React.Suspense>
-      )}
+      )}  */}
       {/* END EDIT CITY MODAL */}
     </div>
   );

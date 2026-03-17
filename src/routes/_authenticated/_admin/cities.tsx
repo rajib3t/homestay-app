@@ -4,11 +4,16 @@ import { createFileRoute } from '@tanstack/react-router'
 import  {CityHeader} from '@/locations/cities/components/header'
 import { useMutation , useQueryClient, useQuery} from '@tanstack/react-query'
 import { createCity, updateCity as updateCityService } from '@/services/location'
-import type { CreateCityDTO, City, UpdateCityDTO } from '@/types/location'
+import type {  City, UpdateCityDTO } from '@/types/location'
 import { parseValidationErrors } from '@/lib/utils'
 import { getCitiesQuery, getCityQuery } from '@/locations/queries'
 import { CityList } from '@/locations/cities/components/list'
 import CitiesSearch from '@/locations/cities/components/search'
+import AddCityModal from '@/locations/cities/components/add'
+import { useForm } from '@tanstack/react-form'
+import CityEdit from '@/locations/cities/components/edit'
+import { Value } from '@radix-ui/react-select'
+
 export const Route = createFileRoute('/_authenticated/_admin/cities')({
   validateSearch: (search: RouteSearch) => ({
     page: Number(search.page ?? 1),
@@ -82,8 +87,7 @@ function RouteComponent() {
       }
     }, [page, totalPages, limit, sort, sort_order, searchFilter, queryClient]);
 
-
-  const { mutateAsync: addNewCity } = useMutation({
+    const { mutateAsync: addNewCity } = useMutation({
     mutationFn: createCity,
   
     onMutate: async (newCity) => {
@@ -114,39 +118,37 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: ["GET_COUNTRIES"] })
     },
   })
+   const createCityForm = useForm({
+    defaultValues :  {
+      name: '',
+      country: '',
+      image: '',
+      is_popular: false,
+    },
+    onSubmit: async ({ value }) => {
+      setValidationErrors({})
+      try {
+        await addNewCity(value)
+        setOpenNewCityModal(false)
+        createCityForm.reset()
+      } catch (err: any) {
+        const map = parseValidationErrors(err)
+        if (Object.keys(map).length) setValidationErrors(map)
+        throw err
+      }
+    },
+  })
+  
 
-   const handleAddNewCity = useCallback(
-      async (payload: CreateCityDTO) => {
-        setValidationErrors({})
-        try {
-          await addNewCity(payload)
-          setValidationErrors({})
-        } catch (err: any) {
-          const map = parseValidationErrors(err)
-          if (Object.keys(map).length) setValidationErrors(map)
-          throw err
-        }
-      },
-      [addNewCity]
-    );
+   
 
-   const handleOpenEditCityModal = useCallback(
-  async (city: City) => {
-    setOpenEditCityModal(true);
-
-    try {
-      const res = await queryClient.fetchQuery(
-        getCityQuery(city.id)()
-      );
-
-      return res?.data ?? city;
-    } catch (err) {
-      return city;
-    }
-  },
-  [queryClient]
-);
-
+   const handleOpenEditCityModal = async (city: City)=>{
+    editCityForm.setFieldValue("name", city.name)
+    editCityForm.setFieldValue("country", city.country)
+    editCityForm.setFieldValue("image", city.image || '')
+    editCityForm.setFieldValue("is_popular", city.is_popular)
+    setOpenEditCityModal(true)
+   }
 const {
   mutateAsync: updateCityMutation 
 } = useMutation({
@@ -180,6 +182,18 @@ const {
   },
 })
 
+const editCityForm = useForm({
+    defaultValues :  {
+      name: '',
+      country: '',
+      image: '',
+      is_popular: false,
+    },
+    onSubmit: async ({ value }) => {
+      // This onSubmit can be used if you want to handle form submission from the edit modal itself
+    },
+  })
+
     const handleUpdateCity = useCallback(
       async (updatedCity: City) => {
         setValidationErrors({})
@@ -201,8 +215,12 @@ const {
       <CityHeader
         openNewCityModal={openNewCityModal}
         setOpenNewCityModal={setOpenNewCityModal}
-        onAddNewCity={handleAddNewCity}
-
+        validationErrors={validationErrors}
+      />
+      <AddCityModal
+        open={openNewCityModal}
+        onOpenChange={(open) => setOpenNewCityModal(open)}
+        form={createCityForm}
         validationErrors={validationErrors}
       />
       <div className="py-4">
@@ -240,11 +258,8 @@ const {
         isLoading={isLoading}
         meta={meta ?? undefined}
         onPageChange={handlePageChange}
-        openEditCityModal={openEditCityModal}
-        setOpenEditCityModal={setOpenEditCityModal}
-        onEditModalOpen={handleOpenEditCityModal}
-        onUpdateCity={handleUpdateCity}
-        validationErrors={validationErrors}
+        onEditCity={handleOpenEditCityModal}
+
         //openStatusChangeModal={handleOpenStatusChangeModal}
 
         onSortChange={(col, order) => {
@@ -259,6 +274,13 @@ const {
         }}
         currentSort={sort ?? null}
         currentOrder={sort_order ?? null}
+      />
+      <CityEdit 
+        open={openEditCityModal}
+        onOpenChange={(open) => setOpenEditCityModal(open)}
+        data={editCityForm.state.values as City} // You would replace this with the actual city data when opening the modal
+        form={editCityForm} // You might want to use a separate form instance for editing
+        validationErrors={validationErrors}
       />
     </React.Fragment>
   )

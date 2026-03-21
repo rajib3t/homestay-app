@@ -1,7 +1,7 @@
 import { protectedApi } from "@/lib/api";
 import type { ApiResponse } from "@/types/common";
 
-import type { CreateCountryDTO, Country, UpdateCountryDTO, CreateCityDTO, City, UpdateCityDTO, CreateLocationDTO, Location } from "@/types/location";
+import type { CreateCountryDTO, Country, UpdateCountryDTO, City, CreateLocationDTO, Location, CityDTO } from "@/types/location";
 
 
 export const createCountry = (payload: CreateCountryDTO) => {
@@ -79,7 +79,7 @@ export const fetchCountry = async (id: string) => {
 }
 
 
-export const createCity = async (payload: CreateCityDTO) => {
+export const createCity = async (payload: Partial<CityDTO>) => {
   const { name, country, is_popular, image } = payload;
   return protectedApi.post<ApiResponse<City>>('/locations/city', { name, country: country, is_popular, image });
 }
@@ -131,9 +131,15 @@ export const fetchCity = async (id: string) => {
   return apiResponse;
 };
 
-export const updateCity = async (id: string, payload: UpdateCityDTO) => {
+export const updateCity = async (id: string, payload: Partial<CityDTO>) => {
   const { name, country, is_popular, image } = payload;
-  return protectedApi.patch<ApiResponse<City>>(`/locations/city/${id}`, { name, country: country, is_popular, image });
+  if (image && image.startsWith("data:")) {
+    // If the image is a base64 string, we can send it directly
+    return protectedApi.patch<ApiResponse<City>>(`/locations/city/${id}`, { name, country: country, is_popular, image });
+  }else {
+    // If the image is a URL, we should send it as is
+    return protectedApi.patch<ApiResponse<City>>(`/locations/city/${id}`, { name, country: country, is_popular, image: null });
+  }
 };
 
 

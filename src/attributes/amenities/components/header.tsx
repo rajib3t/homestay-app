@@ -1,6 +1,4 @@
 import AdminHeader from "@/components/common/admin-header";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import React from "react";
 interface AmenitiesHeaderProps {
     setOpenNewAmenityModal: (open: boolean) => void;

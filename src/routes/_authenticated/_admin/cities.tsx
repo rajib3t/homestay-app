@@ -1,10 +1,10 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react'
+import React, { useEffect, useMemo, useState} from 'react'
 
 import { createFileRoute } from '@tanstack/react-router'
 import  {CityHeader} from '@/locations/cities/components/header'
 import { useMutation , useQueryClient, useQuery} from '@tanstack/react-query'
 import { createCity, updateCity as updateCityService } from '@/services/location'
-import type {  City, UpdateCityDTO } from '@/types/location'
+import type {  City, CityDTO } from '@/types/location'
 import { parseValidationErrors } from '@/lib/utils'
 import { getCitiesQuery, getCityQuery } from '@/locations/queries'
 import { CityList } from '@/locations/cities/components/list'
@@ -12,7 +12,7 @@ import CitiesSearch from '@/locations/cities/components/search'
 import AddCityModal from '@/locations/cities/components/add'
 import { useForm } from '@tanstack/react-form'
 import CityEdit from '@/locations/cities/components/edit'
-import { Value } from '@radix-ui/react-select'
+
 
 export const Route = createFileRoute('/_authenticated/_admin/cities')({
   validateSearch: (search: RouteSearch) => ({
@@ -118,6 +118,7 @@ function RouteComponent() {
       queryClient.invalidateQueries({ queryKey: ["GET_COUNTRIES"] })
     },
   })
+ 
    const createCityForm = useForm({
     defaultValues :  {
       name: '',
@@ -143,18 +144,29 @@ function RouteComponent() {
    
 
    const handleOpenEditCityModal = async (city: City)=>{
-    editCityForm.setFieldValue("name", city.name)
-    editCityForm.setFieldValue("country", city.country)
-    editCityForm.setFieldValue("image", city.image || '')
-    editCityForm.setFieldValue("is_popular", city.is_popular)
-    setOpenEditCityModal(true)
+     try {
+      const res = await queryClient.fetchQuery(
+        getCityQuery(city.id)()
+      );
+      editCityForm.setFieldValue("id", res?.data.id)
+      editCityForm.setFieldValue("name", res?.data?.name )
+      editCityForm.setFieldValue("country", res?.data?.country)
+      editCityForm.setFieldValue("image", res?.data?.image || '')
+      editCityForm.setFieldValue("is_popular", res?.data?.is_popular )
+      setOpenEditCityModal(true)
+      
+    } catch (err) {
+      return city;
+    }
+    
    }
 const {
   mutateAsync: updateCityMutation 
 } = useMutation({
-  mutationFn: ({ id, payload }: { id: string; payload: UpdateCityDTO }) => updateCityService(id, payload),
+  mutationFn: ({ id, payload }: { id: string; payload: CityDTO }) => updateCityService(id, payload),
   
   onMutate: async ({ id, payload }) => {
+    //await queryClient.cancelQueries({ queryKey: ["GET_CITY", id] })
     await queryClient.cancelQueries({ queryKey: ["GET_CITIES", page, limit] })
     const previous = queryClient.getQueryData(["GET_CITIES", page, limit])
 
@@ -179,37 +191,33 @@ const {
   onSettled: () => {
     queryClient.invalidateQueries({ queryKey: ["GET_CITIES", page, limit] })
     queryClient.invalidateQueries({ queryKey: ["GET_COUNTRIES"] })
+    queryClient.invalidateQueries({ queryKey: ["GET_CITY"] })
   },
 })
 
 const editCityForm = useForm({
     defaultValues :  {
+      id: '',
       name: '',
       country: '',
       image: '',
       is_popular: false,
     },
     onSubmit: async ({ value }) => {
-      // This onSubmit can be used if you want to handle form submission from the edit modal itself
+      setValidationErrors({})
+      try {
+        await updateCityMutation({ id: value.id, payload: value })
+        queryClient.invalidateQueries({ queryKey: ["GET_CITY", value.id] })
+        setOpenEditCityModal(false)
+      } catch (err: any) {
+        const map = parseValidationErrors(err)
+        if (Object.keys(map).length) setValidationErrors(map)
+        throw err
+      }
     },
   })
 
-    const handleUpdateCity = useCallback(
-      async (updatedCity: City) => {
-        setValidationErrors({})
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { id, ...payload } = updatedCity;
-          await updateCityMutation({ id, payload })
-          setOpenEditCityModal(false)
-        } catch (err: any) {
-          const map = parseValidationErrors(err)
-          if (Object.keys(map).length) setValidationErrors(map)
-          throw err
-        }
-      },
-      [updateCityMutation]
-    );
+   
   return (
     <React.Fragment>
       <CityHeader

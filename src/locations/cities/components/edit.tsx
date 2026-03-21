@@ -1,7 +1,6 @@
 import React from "react"
 import type { City } from "@/types/location";
 import type { ReactFormExtendedApi } from "@tanstack/react-form";
-import type { CityDTO } from "@/types/location";
 import { Button } from "@/components/ui/button";
 import { X , UploadCloudIcon} from "lucide-react";
 import { Field, FieldError } from "@/components/ui/field";
@@ -12,21 +11,27 @@ import { fetchCountries } from "@/services/location";
 import { getCountriesQuery } from "@/locations/queries";
 import type { SearchParams } from "@/types/common";
 import type { AnyFieldApi } from "@tanstack/react-form";
+ type CityFormValues = {
+  id: string;
+  name: string;
+  country: string;
+  image: string;
+  is_popular: boolean;
+};
 interface CityEditProps {
   data: City;
   open: boolean;
-  form: ReactFormExtendedApi<CityDTO, any, any, any, any, any, any, any, any, any, any, any>;
+  form: ReactFormExtendedApi<CityFormValues, any, any, any, any, any, any, any, any, any, any, any>;
    onOpenChange: (open: boolean) => void;
    validationErrors?: Record<string, string[]>
 }
 
 const CityEdit: React.FC<CityEditProps> = ({ data, open, onOpenChange, form, validationErrors }) => {
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
-  
-    React.useEffect(() => {
-      if (open) setImagePreview(null);
-      if( data.image) setImagePreview(data.image);
-    }, [open])
+    
+   React.useEffect(() => {
+          if (open) setImagePreview(data.image || null);
+        }, [open]);
     const [countryOptions, setCountryOptions] = React.useState<{ value: string | number; label: string }[]>([]);
     React.useEffect(() => {
         // load initial country list
@@ -71,12 +76,12 @@ const CityEdit: React.FC<CityEditProps> = ({ data, open, onOpenChange, form, val
                 }}
             >
               <div>
-                   <form.Field
-                        name="image"
-                        validators={{
-                        onChange: ({ value }: { value: File | null }) =>
-                            !value ? 'An image is required' : undefined,
-                        }}
+                     <form.Field
+                      name="image"
+                      validators={{
+                      onChange: ({ value }: { value: string }) =>
+                        !value ? 'An image is required' : undefined,
+                      }}
                         children={(field: AnyFieldApi ) => {
                             const apiErrors = validationErrors?.[field.name] ?? [];
                             const isInvalid =
@@ -157,7 +162,7 @@ const CityEdit: React.FC<CityEditProps> = ({ data, open, onOpenChange, form, val
                                         id={field.name}
                                         name={field.name}
                                         options={countryOptions}
-                                        value={data.country}
+                                        value={field.state.value}
                                         onChange={(e) => {
                                           
                                           field.handleChange(e);
@@ -300,7 +305,7 @@ const CityEdit: React.FC<CityEditProps> = ({ data, open, onOpenChange, form, val
                                     Reset
                                 </Button>
                                 <Button className="cursor-pointer" type="submit" disabled={!canSubmit}>
-                                    {isSubmitting ? '...' : 'Add Amenity'}
+                                    {isSubmitting ? '...' : 'Update'}
                                 </Button>
                             </React.Fragment>
                         )}

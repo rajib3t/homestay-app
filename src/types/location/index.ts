@@ -1,3 +1,5 @@
+import type { s } from "node_modules/vite/dist/node/chunks/moduleRunnerTransport";
+
 export interface Country {
     id: number;
     name: string;
@@ -15,18 +17,14 @@ export interface CreateCountryDTO {
 }
 
 export interface CityDTO {
+    id: string;
     name: string;
     country: string;
     is_popular: boolean;
     image: string 
 }
 
-export interface UpdateCityDTO {
-    name?: string;
-    country?: string;
-    is_popular?: boolean;
-    image?: string | File | null;
-}
+
 
 export interface UpdateCountryDTO {
     name?: string;

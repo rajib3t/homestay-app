@@ -6,17 +6,22 @@ import { X, UploadCloudIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 import type { ReactFormExtendedApi } from "@tanstack/react-form";
-import type { CityDTO } from "@/types/location";
 import { Field, FieldError } from "@/components/ui/field";
 import { type AnyFieldApi } from "@tanstack/react-form"
 import SearchableSelect from "@/components/ui/searchable-select";
 import { getCountriesQuery } from "@/locations/queries";
 import { fetchCountries } from "@/services/location";
 import  type { SearchParams } from "@/types/common";
+ type CityFormValues = {
+  name: string;
+  country: string;
+  image: string;
+  is_popular: boolean;
+};
 interface AddCityModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-     form: ReactFormExtendedApi<CityDTO, any, any, any, any, any, any, any, any, any, any, any>;
+     form: ReactFormExtendedApi<CityFormValues, any, any, any, any, any, any, any, any, any, any, any>;
     validationErrors?: Record<string, string[]>
 }
 
@@ -72,12 +77,12 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ open, onOpenChange, form, v
                 }}
             >
               <div>
-                   <form.Field
-                        name="image"
-                        validators={{
-                        onChange: ({ value }: { value: File | null }) =>
-                            !value ? 'An image is required' : undefined,
-                        }}
+                     <form.Field
+                      name="image"
+                      validators={{
+                      onChange: ({ value }: { value: string }) =>
+                        !value ? 'An image is required' : undefined,
+                      }}
                         children={(field: AnyFieldApi ) => {
                             const apiErrors = validationErrors?.[field.name] ?? [];
                             const isInvalid =
@@ -301,7 +306,7 @@ const AddCityModal: React.FC<AddCityModalProps> = ({ open, onOpenChange, form, v
                                     Reset
                                 </Button>
                                 <Button className="cursor-pointer" type="submit" disabled={!canSubmit}>
-                                    {isSubmitting ? '...' : 'Add Amenity'}
+                                    {isSubmitting ? '...' : 'Add City'}
                                 </Button>
                             </React.Fragment>
                         )}

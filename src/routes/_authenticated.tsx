@@ -39,28 +39,28 @@ export const Route = createFileRoute('/_authenticated')({
       staleTime: 1000 * 60 * 5, // 5 minutes
     })
   },
-  component: RouteComponent,
+  component: SplitComponent,
   errorComponent: () => (
-    <RouteComponent>
+    <SplitComponent>
       <ErrorView 
         statusCode="500"
         title="Server Error"
         message="Something went wrong on our end. Please try again later or contact support if the problem persists."
       />
-    </RouteComponent>
+    </SplitComponent>
   ),
   notFoundComponent: () => (
-    <RouteComponent>
+    <SplitComponent>
       <ErrorView 
         statusCode="404"
         title="Not Found"
         message="The page you're looking for within the dashboard doesn't exist."
       />
-    </RouteComponent>
+    </SplitComponent>
   ),
 })
 
-function RouteComponent({ children }: { children?: React.ReactNode }) {
+function SplitComponent({ children }: { children?: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />

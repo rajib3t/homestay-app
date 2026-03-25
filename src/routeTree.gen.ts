@@ -26,6 +26,8 @@ import { Route as AuthenticatedAdminBedTypesRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminAmenitiesRouteImport } from './routes/_authenticated/_admin/amenities'
 import { Route as publicLayoutAboutRouteImport } from './routes/(public)/_layout/about'
 import { Route as authLayoutLoginRouteImport } from './routes/(auth)/_layout/login'
+import { Route as AuthenticatedAdminVendorsIndexRouteImport } from './routes/_authenticated/_admin/vendors/index'
+import { Route as AuthenticatedAdminVendorsVendorIDEditRouteImport } from './routes/_authenticated/_admin/vendors/$vendorID/edit'
 
 const TestHeadRoute = TestHeadRouteImport.update({
   id: '/test-head',
@@ -115,8 +117,21 @@ const authLayoutLoginRoute = authLayoutLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => authLayoutRoute,
 } as any)
+const AuthenticatedAdminVendorsIndexRoute =
+  AuthenticatedAdminVendorsIndexRouteImport.update({
+    id: '/vendors/',
+    path: '/vendors/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminVendorsVendorIDEditRoute =
+  AuthenticatedAdminVendorsVendorIDEditRouteImport.update({
+    id: '/vendors/$vendorID/edit',
+    path: '/vendors/$vendorID/edit',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof publicLayoutIndexRoute
   '/test-head': typeof TestHeadRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -129,9 +144,11 @@ export interface FileRoutesByFullPath {
   '/countries': typeof AuthenticatedAdminCountriesRoute
   '/facility': typeof AuthenticatedAdminFacilityRoute
   '/locations': typeof AuthenticatedAdminLocationsRoute
-  '/': typeof publicLayoutIndexRoute
+  '/vendors/': typeof AuthenticatedAdminVendorsIndexRoute
+  '/vendors/$vendorID/edit': typeof AuthenticatedAdminVendorsVendorIDEditRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof publicLayoutIndexRoute
   '/test-head': typeof TestHeadRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -144,7 +161,8 @@ export interface FileRoutesByTo {
   '/countries': typeof AuthenticatedAdminCountriesRoute
   '/facility': typeof AuthenticatedAdminFacilityRoute
   '/locations': typeof AuthenticatedAdminLocationsRoute
-  '/': typeof publicLayoutIndexRoute
+  '/vendors': typeof AuthenticatedAdminVendorsIndexRoute
+  '/vendors/$vendorID/edit': typeof AuthenticatedAdminVendorsVendorIDEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -165,10 +183,13 @@ export interface FileRoutesById {
   '/_authenticated/_admin/facility': typeof AuthenticatedAdminFacilityRoute
   '/_authenticated/_admin/locations': typeof AuthenticatedAdminLocationsRoute
   '/(public)/_layout/': typeof publicLayoutIndexRoute
+  '/_authenticated/_admin/vendors/': typeof AuthenticatedAdminVendorsIndexRoute
+  '/_authenticated/_admin/vendors/$vendorID/edit': typeof AuthenticatedAdminVendorsVendorIDEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/test-head'
     | '/dashboard'
     | '/profile'
@@ -181,9 +202,11 @@ export interface FileRouteTypes {
     | '/countries'
     | '/facility'
     | '/locations'
-    | '/'
+    | '/vendors/'
+    | '/vendors/$vendorID/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/test-head'
     | '/dashboard'
     | '/profile'
@@ -196,7 +219,8 @@ export interface FileRouteTypes {
     | '/countries'
     | '/facility'
     | '/locations'
-    | '/'
+    | '/vendors'
+    | '/vendors/$vendorID/edit'
   id:
     | '__root__'
     | '/_authenticated'
@@ -216,6 +240,8 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/facility'
     | '/_authenticated/_admin/locations'
     | '/(public)/_layout/'
+    | '/_authenticated/_admin/vendors/'
+    | '/_authenticated/_admin/vendors/$vendorID/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -237,7 +263,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -265,7 +291,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated/_admin': {
       id: '/_authenticated/_admin'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
@@ -346,6 +372,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authLayoutLoginRouteImport
       parentRoute: typeof authLayoutRoute
     }
+    '/_authenticated/_admin/vendors/': {
+      id: '/_authenticated/_admin/vendors/'
+      path: '/vendors'
+      fullPath: '/vendors/'
+      preLoaderRoute: typeof AuthenticatedAdminVendorsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/vendors/$vendorID/edit': {
+      id: '/_authenticated/_admin/vendors/$vendorID/edit'
+      path: '/vendors/$vendorID/edit'
+      fullPath: '/vendors/$vendorID/edit'
+      preLoaderRoute: typeof AuthenticatedAdminVendorsVendorIDEditRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
@@ -356,6 +396,8 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCountriesRoute: typeof AuthenticatedAdminCountriesRoute
   AuthenticatedAdminFacilityRoute: typeof AuthenticatedAdminFacilityRoute
   AuthenticatedAdminLocationsRoute: typeof AuthenticatedAdminLocationsRoute
+  AuthenticatedAdminVendorsIndexRoute: typeof AuthenticatedAdminVendorsIndexRoute
+  AuthenticatedAdminVendorsVendorIDEditRoute: typeof AuthenticatedAdminVendorsVendorIDEditRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
@@ -365,6 +407,9 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCountriesRoute: AuthenticatedAdminCountriesRoute,
   AuthenticatedAdminFacilityRoute: AuthenticatedAdminFacilityRoute,
   AuthenticatedAdminLocationsRoute: AuthenticatedAdminLocationsRoute,
+  AuthenticatedAdminVendorsIndexRoute: AuthenticatedAdminVendorsIndexRoute,
+  AuthenticatedAdminVendorsVendorIDEditRoute:
+    AuthenticatedAdminVendorsVendorIDEditRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =

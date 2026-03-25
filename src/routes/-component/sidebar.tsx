@@ -23,7 +23,8 @@ import {
   User,
   LogOut,
   MapPin,
-  VectorSquare 
+  VectorSquare,
+  Component 
 } from 'lucide-react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -54,6 +55,11 @@ const menuItems: Array<{
       { title: 'Facilities', url: '/facility' },
       { title: 'Bed Types', url: '/bed-types' },
     ],
+  },
+  {
+    title: 'Vendors',
+    icon: Component,
+    url: '/vendors',
   },
   {
     title: 'Bookings',

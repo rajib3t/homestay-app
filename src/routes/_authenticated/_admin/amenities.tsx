@@ -231,6 +231,7 @@ function RouteComponent() {
   }) // Implement the mutation for confirming status change (activate/deactivate) of an amenity
 
   const openStatusChangeModal = useCallback((amenity: Amenity) => {
+    
       setStatusChangeAmenity(amenity)
       setIsOpenStatusChangeModal(true)
     }, [])

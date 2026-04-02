@@ -230,9 +230,9 @@ const AddVendor: React.FC<AddVendorProps> = ({ open, onOpenChange, form, validat
                         validators={{
                             onChange: ({ value }: { value: string }) =>
                                 !value
-                                ? 'Email is required'
-                                : value.length < 3
-                                    ? 'Email must be at least 3 characters'
+                                    ? 'Email is required'
+                                    : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+                                    ? 'Invalid email format'
                                     : undefined,
                             onChangeAsyncDebounceMs: 500,
                             onChangeAsync: async ({ value }: { value: string }) => {
@@ -254,6 +254,7 @@ const AddVendor: React.FC<AddVendorProps> = ({ open, onOpenChange, form, validat
                                   <Label className="text-sm font-medium">Email</Label>
                                   <Input
                                       id={field.name}
+                                      type="email"
                                       name={field.name}
                                       value={field.state.value}
                                       onBlur={field.handleBlur}
@@ -281,10 +282,13 @@ const AddVendor: React.FC<AddVendorProps> = ({ open, onOpenChange, form, validat
                         validators={{
                             onChange: ({ value }: { value: string }) =>
                                 !value
-                                ? 'Phone number is required'
-                                : value.length < 3
-                                    ? 'Phone number must be at least 3 characters'
-                                    : undefined,
+                                    ? 'Phone number is required'
+                                    : !/^[0-9]+$/.test(value)
+                                    ? 'Phone number must contain only digits'
+                                    : value.length < 10
+                                        ? 'Phone number must be at least 10 digits'
+                                        : undefined,
+                                
                             onChangeAsyncDebounceMs: 500,
                             onChangeAsync: async ({ value }: { value: string }) => {
                                 await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -306,6 +310,7 @@ const AddVendor: React.FC<AddVendorProps> = ({ open, onOpenChange, form, validat
                                   <Input
                                       id={field.name}
                                       name={field.name}
+                                      type="tel"
                                       value={field.state.value}
                                       onBlur={field.handleBlur}
                                       onChange={(e) => {
@@ -430,6 +435,30 @@ const AddVendor: React.FC<AddVendorProps> = ({ open, onOpenChange, form, validat
                     />
                 
                 </div>
+                <div className="flex justify-end gap-3 pt-4">
+                                    <form.Subscribe
+                                        selector={(state: { canSubmit: boolean; isSubmitting: boolean }): [boolean, boolean] => [state.canSubmit, state.isSubmitting]}
+                                        children={([canSubmit, isSubmitting]: [boolean, boolean]) => (
+                                            <React.Fragment>
+                                                <Button
+                                                    className="cursor-pointer"
+                                                    variant={"outline"}
+                                                    type="reset"
+                                                    onClick={(e) => {
+                                                       
+                                                        e.preventDefault()
+                                                        form.reset()
+                                                    }}
+                                                >
+                                                    Reset
+                                                </Button>
+                                                <Button className="cursor-pointer" type="submit" disabled={!canSubmit}>
+                                                    {isSubmitting ? '...' : 'Create Vendor'}
+                                                </Button>
+                                            </React.Fragment>
+                                        )}
+                                    />
+                                  </div>
                 </form>
 
               </div>

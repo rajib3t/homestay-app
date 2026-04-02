@@ -89,7 +89,7 @@ class ApiClient {
     }
 
     if (this.decodedUserId) {
-      config.headers['x-student-id'] = this.decodedUserId
+      config.headers['x-user-id'] = this.decodedUserId
     }
 
     config.headers['X-Request-URL'] =
@@ -274,7 +274,9 @@ class ApiClient {
   }
 
   public post<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
-    return this.wrap(this.publicApi.post<T>(url, data, config))
+    return this.wrap(
+      this.publicApi.post<T>(url, data, this.withIdempotencyKey(config))
+    )
   }
 
   public put<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
@@ -300,7 +302,9 @@ class ApiClient {
     data?: unknown,
     config?: AxiosRequestConfig
   ) {
-    return this.wrap(this.protectedApi.post<T>(url, data, config))
+    return this.wrap(
+      this.protectedApi.post<T>(url, data, this.withIdempotencyKey(config))
+    )
   }
 
   public protectedPut<T>(
@@ -334,6 +338,23 @@ class ApiClient {
     return {
       data: response.data,
       success: true,
+    }
+  }
+
+  private withIdempotencyKey(config?: AxiosRequestConfig): AxiosRequestConfig {
+    const headers = new axios.AxiosHeaders(config?.headers as any)
+
+    if (!headers.has('Idempotency-Key')) {
+      const key = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+      headers.set('Idempotency-Key', key)
+    }
+
+    return {
+      ...config,
+      headers,
     }
   }
 

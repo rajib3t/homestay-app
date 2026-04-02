@@ -1,4 +1,4 @@
-import type { s } from "node_modules/vite/dist/node/chunks/moduleRunnerTransport";
+
 
 export interface Country {
     id: number;

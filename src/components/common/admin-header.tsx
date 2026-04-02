@@ -7,16 +7,13 @@ interface AdminHeaderProps {
     title: string;
     description?: string;
     addLabel: string;
-    openAddModal: boolean;
     setOpenAddModal: (open: boolean) => void;
-    
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({ 
     title, 
     description,
     addLabel = 'Add New',
-    openAddModal,
     setOpenAddModal
 }) => {
     return (

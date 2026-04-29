@@ -48,3 +48,31 @@ export const fetchUsers = async (
    
      return response.data as unknown as ApiResponse<UserData[]>;
 };
+
+
+export const fetchUserById = async (id: string): Promise<ApiResponse<UserData>> => {
+    try {
+        const response = await protectedApi.get<ApiResponse<UserData>>(`/users/${id}`);
+        return response.data;
+    } catch (error) {
+        throw error as ApiError;
+    }
+}
+
+export const profileImageUpload = async (id: string, payload: { image: string }) => {
+  const { image } = payload;
+
+  return protectedApi.put<ApiResponse<UserData>>(`/users/${id}/profile-image`, { image });
+};
+
+export const updateUser = async (
+  id: string,
+  userData: Partial<CreateUserData>
+): Promise<ApiResponse<UserData>> => {
+  try {
+    const response = await protectedApi.put<ApiResponse<UserData>>(`/users/${id}`, userData);
+    return response.data;
+  } catch (error) {
+    throw error as ApiError;
+  }
+};

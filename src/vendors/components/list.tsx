@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import { TableHead, TableCell } from '@/components/ui/table'
@@ -7,6 +7,7 @@ import type { PaginatedMeta } from "@/types/common";
 // import  EditCityModal  from "@/locations/cities/components/edit";
 import CommonTable from "@/components/common/common-table";
 import type { UserData } from "@/types/user";
+import Avatar from "@/components/common/avatar";
 interface VendorListProps {
   data?: UserData[];
   isLoading?: boolean;
@@ -41,7 +42,7 @@ const VendorList: React.FC<VendorListProps> = ({
   
   
 }) => {
- 
+ const [imgError, setImgError] = useState(false);
   
 
 
@@ -99,13 +100,7 @@ const VendorList: React.FC<VendorListProps> = ({
             <TableCell className="font-medium">
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 shadow-lg ring-4 ring-white">
-                    <img
-                      src={vendor?.image || "user-placeholder.png"}
-                      alt={vendor?.first_name + ' ' + vendor?.last_name}
-                      className="w-full h-full "
-                    />
-                  </div>
+                  <Avatar src={vendor?.image} firstName={vendor?.first_name} lastName={vendor?.last_name} size={40} className="shadow-lg ring-4 ring-white" />
                   {/*    */}
                 </div>
 

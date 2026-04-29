@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query"
 import type { SearchParams } from "@/types/common"
-import { fetchUsers } from "@/services/user"
+import { fetchUserById, fetchUsers } from "@/services/user"
 
 
 
@@ -9,5 +9,13 @@ import { fetchUsers } from "@/services/user"
     return queryOptions({
       queryKey: ["GET_VENDORS", page, limit, sort, sort_order, filter],
       queryFn: () => fetchUsers(page, limit, sort, sort_order, filter),
+    })
+}
+
+
+export const getVendorQuery = (id: string) => () => {
+    return queryOptions({
+      queryKey: ["GET_VENDOR", id],
+      queryFn: () => fetchUserById(id),
     })
 }

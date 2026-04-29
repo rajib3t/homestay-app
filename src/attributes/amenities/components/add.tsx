@@ -1,9 +1,10 @@
 import React from "react";
-import { X, UploadCloudIcon } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type AnyFieldApi } from "@tanstack/react-form"
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import UploadImage from "@/components/upload-image";
 import {
   Field,
   FieldError,
@@ -116,44 +117,16 @@ const AddAmenity: React.FC<AddAmenityProps> = ({ open, onOpenChange, form, valid
                             <React.Fragment>
                                 <Field data-invalid={isInvalid}>
                                 <Label className="text-sm font-medium">Icon</Label>
-                                <div className="w-full h-48 bg-gray-50 rounded-md border border-gray-200 flex items-center justify-center">
-                                {imagePreview ? (
-                                    <img src={imagePreview} alt="icon preview" className="object-cover w-20 h-20 rounded-md" />
-                                ) : (
-                                    <div className="text-muted-foreground flex flex-col items-center">
-                                    <span>20x20</span>
-                                    </div>
-                                )}
-                                </div>
-                                <div className="relative mt-2">
-                                <Label className="flex items-center justify-center gap-2 border rounded-md px-4 py-2 cursor-pointer hover:bg-gray-50">
-                                    <UploadCloudIcon className="w-4 h-4 text-gray-600" />
-                                    <span className="text-sm">Upload Image</span>
-                                    <Input
-                                        className="hidden"
-                                        type="file"
-                                        accept="image/*"
-                                        id={field.name}
-                                        name={field.name}
-                                        // ✅ NO value prop — file inputs must be uncontrolled
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onload = () => {
-                                                const result = reader.result as string;
-                                                setImagePreview(result);
-                                                 field.handleChange(result); // ✅ store the File object, not file.name
-                                                };
-                                                reader.readAsDataURL(file);
-                                               
-                                                
-                                            }
-                                        }}
-                                    />
-                                </Label>
-                                </div>
+                                <UploadImage
+                                    id={field.name}
+                                    name={field.name}
+                                    preview={imagePreview}
+                                    onPreviewChange={setImagePreview}
+                                    onValueChange={(value) => field.handleChange(value)}
+                                    onBlur={field.handleBlur}
+                                    alt="icon preview"
+                                    emptyText="20x20"
+                                />
                                 {isInvalid && (
                                     <FieldError errors={[
                                       ...field.state.meta.errors.map((e) => e ? { message: String(e) } : undefined),

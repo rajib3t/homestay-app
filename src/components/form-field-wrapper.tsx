@@ -5,7 +5,7 @@ import type { AnyFieldApi } from '@tanstack/react-form'
 
 interface FormFieldWrapperProps {
   field: AnyFieldApi
-  label: string
+  label: React.ReactNode
   children: React.ReactNode
   apiErrors?: string[]
 }

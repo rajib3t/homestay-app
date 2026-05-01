@@ -6,6 +6,7 @@ import { ArrowLeftIcon, CircleCheckIcon, OctagonXIcon, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 import UploadImage from '@/components/upload-image'
+import { FormFieldWrapper } from '@/components/form-field-wrapper'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Field, FieldError } from '@/components/ui/field'
@@ -19,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { parseValidationErrors } from '@/lib/utils'
-import { profileImageUpload, updateUser } from '@/services/user'
+import { profileImageUpload, updateUser, updateUserPassword } from '@/services/user'
 import type {  UserData } from '@/types/user'
 import { getVendorQuery } from '@/vendors/queries'
 
@@ -33,9 +34,21 @@ type VendorEditFormValues = {
   role: string
   password: string
   confirmPassword: string
+  companyName: string
+  companyEmail: string
+  companyPhone: string
+  companyStreet: string
+  companyCity: string
+  companyState: string
+  companyZipCode: string
+  companyCountry: string
+  companyAddressType: 'work' | 'home' | 'other'
+  companyIsPrimary: boolean
 }
 
-type VendorImageFormValues = Pick<VendorEditFormValues, 'image'>
+type VendorImageFormValues = {
+  image?: string
+}
 
 type VendorPasswordFormValues = Pick<
   VendorEditFormValues,
@@ -44,7 +57,7 @@ type VendorPasswordFormValues = Pick<
 
 type VendorDetailsFormValues = Pick<
   VendorEditFormValues,
-  'username' | 'firstName' | 'lastName' | 'contactEmail' | 'phoneNumber' | 'role'
+  'username' | 'firstName' | 'lastName' | 'contactEmail' | 'phoneNumber' | 'role' | 'companyName' | 'companyEmail' | 'companyPhone' | 'companyStreet' | 'companyCity' | 'companyState' | 'companyZipCode' | 'companyCountry' | 'companyAddressType' | 'companyIsPrimary'
 >
 
 type UpdateVendorPayload = {
@@ -56,10 +69,24 @@ type UpdateVendorPayload = {
   user_type?: string
   image?: string
   password?: string
+  company?: {
+    name?: string
+    email?: string
+    phone?: string
+    address?: {
+      street?: string
+      city?: string
+      state?: string
+      zip_code?: string
+      country?: string
+      address_type?: 'work' | 'home' | 'other'
+      is_primary?: boolean
+    }
+  }
 }
 
-const getImageInitialValues = (userData: UserData): VendorImageFormValues => ({
-  image: userData.image ?? '',
+const getImageInitialValues = (): VendorImageFormValues => ({
+  image: undefined,
 })
 
 const getPasswordInitialValues = (): VendorPasswordFormValues => ({
@@ -74,6 +101,16 @@ const getDetailsInitialValues = (userData: UserData): VendorDetailsFormValues =>
   contactEmail: userData.email ?? '',
   phoneNumber: userData.mobile ?? '',
   role: userData.user_type ?? 'vendor',
+  companyName: userData.company?.name ?? '',
+  companyEmail: userData.company?.email ?? '',
+  companyPhone: userData.company?.phone ?? '',
+  companyStreet: userData.company?.address?.street ?? '',
+  companyCity: userData.company?.address?.city ?? '',
+  companyState: userData.company?.address?.state ?? '',
+  companyZipCode: userData.company?.address?.zip_code ?? '',
+  companyCountry: userData.company?.address?.country ?? '',
+  companyAddressType: userData.company?.address?.address_type ?? 'work',
+  companyIsPrimary: userData.company?.address?.is_primary ?? true,
 })
 
 const getApiErrors = (
@@ -116,10 +153,10 @@ function RouteComponent() {
     Record<string, string[]>
   >({})
   const [imagePreview, setImagePreview] = React.useState<string | null>(userData.image ?? null)
+  const [imageSelected, setImageSelected] = React.useState(false)
 
-  
   const imageForm = useForm({
-    defaultValues: getImageInitialValues(userData),
+    defaultValues: getImageInitialValues(),
     validators: {
     onSubmit: ({ value }) => {
       if (!value.image) {
@@ -177,6 +214,20 @@ function RouteComponent() {
           email: value.contactEmail,
           mobile: value.phoneNumber || undefined,
           user_type: value.role,
+          company: {
+            name: value.companyName || undefined,
+            email: value.companyEmail || undefined,
+            phone: value.companyPhone || undefined,
+            address: {
+              street: value.companyStreet || undefined,
+              city: value.companyCity || undefined,
+              state: value.companyState || undefined,
+              zip_code: value.companyZipCode || undefined,
+              country: value.companyCountry || undefined,
+              address_type: value.companyAddressType,
+              is_primary: value.companyIsPrimary,
+            },
+          },
         })
       } catch (error) {
         const map = parseValidationErrors(error)
@@ -192,7 +243,8 @@ function RouteComponent() {
       setPasswordValidationErrors({})
       setDetailsValidationErrors({})
       setImagePreview(nextUserData.image ?? null)
-      imageForm.reset(getImageInitialValues(nextUserData))
+      imageForm.reset({ image: undefined })
+      setImageSelected(false)
       passwordForm.reset(getPasswordInitialValues())
       detailsForm.reset(getDetailsInitialValues(nextUserData))
     },
@@ -202,6 +254,7 @@ function RouteComponent() {
   const handleSuccess = React.useCallback(
     (response: { data: UserData }, message: string) => {
       syncForms(response.data)
+      queryClient.setQueryData(['GET_VENDOR', response.data.id], response)
       queryClient.setQueryData(['GET_VENDOR', userData.id], response)
       queryClient.invalidateQueries({ queryKey: ['GET_VENDORS'] })
 
@@ -241,7 +294,7 @@ function RouteComponent() {
   })
 
   const { mutateAsync: updatePasswordAsync, isPending: isPasswordPending } = useMutation({
-    mutationFn: (data: UpdateVendorPayload) => updateUser(userData.id, data),
+    mutationFn: (data: UpdateVendorPayload) => updateUserPassword(userData.id, data.password ?? ''),
     onSuccess: (response) => handleSuccess(response, 'Password updated successfully'),
     onError: (error: any) =>
       handleError(error, setPasswordValidationErrors, 'Failed to update password'),
@@ -261,7 +314,8 @@ function RouteComponent() {
   const handleImageReset = () => {
     setImageValidationErrors({})
     setImagePreview(userData.image ?? null)
-    imageForm.reset(getImageInitialValues(userData))
+    imageForm.reset({ image: undefined })
+    setImageSelected(false)
   }
 
   const handlePasswordReset = () => {
@@ -297,12 +351,11 @@ function RouteComponent() {
               name="image"
               children={(field: AnyFieldApi) => {
                 const apiErrors = getApiErrors(field, imageValidationErrors)
-                const isInvalid = getIsInvalid(field, apiErrors)
 
                 return (
-                  <Field data-invalid={isInvalid}>
+                  <FormFieldWrapper field={field} apiErrors={apiErrors} label={
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">Profile Photo</Label>
+                      <span className="text-sm font-medium">Profile Photo</span>
                       {imagePreview ? (
                         <Button
                           type="button"
@@ -312,6 +365,7 @@ function RouteComponent() {
                           onClick={() => {
                             setImagePreview(null)
                             field.handleChange('')
+                            setImageSelected(false)
                           }}
                           disabled={isImagePending}
                         >
@@ -319,12 +373,16 @@ function RouteComponent() {
                         </Button>
                       ) : null}
                     </div>
+                  }>
                     <UploadImage
                       id={field.name}
                       name={field.name}
                       preview={imagePreview}
                       onPreviewChange={setImagePreview}
-                      onValueChange={(value) => field.handleChange(value)}
+                      onValueChange={(value) => {
+                        field.handleChange(value)
+                        setImageSelected(true)
+                      }}
                       onBlur={field.handleBlur}
                       alt={`${userData.first_name} ${userData.last_name} profile photo`}
                       emptyText="Profile photo"
@@ -333,8 +391,7 @@ function RouteComponent() {
                       previewWrapperClassName="h-full w-full"
                       previewImageClassName="h-full w-full"
                     />
-                    {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
-                  </Field>
+                  </FormFieldWrapper>
                 )
               }}
             />
@@ -349,7 +406,11 @@ function RouteComponent() {
               >
                 Reset
               </Button>
-              <Button type="submit" className="cursor-pointer" disabled={isImagePending ||!imageForm.state.values.image }>
+              <Button
+                type="submit"
+                className="cursor-pointer"
+                disabled={isImagePending || !imageSelected}
+              >
                 {isImagePending ? 'Saving...' : 'Update Photo'}
               </Button>
             </div>
@@ -394,11 +455,10 @@ function RouteComponent() {
                 }}
                 children={(field: AnyFieldApi) => {
                   const apiErrors = getApiErrors(field, passwordValidationErrors)
-                  const isInvalid = getIsInvalid(field, apiErrors)
+                  // const isInvalid = getIsInvalid(field, apiErrors)
 
                   return (
-                    <Field data-invalid={isInvalid}>
-                      <Label className="text-sm font-medium">New Password</Label>
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="New Password">
                       <Input
                         id={field.name}
                         name={field.name}
@@ -408,8 +468,8 @@ function RouteComponent() {
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
                       />
-                      {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
-                    </Field>
+                      </FormFieldWrapper>
+                    
                   )
                 }}
               />
@@ -438,11 +498,9 @@ function RouteComponent() {
                 }}
                 children={(field: AnyFieldApi) => {
                   const apiErrors = getApiErrors(field, passwordValidationErrors)
-                  const isInvalid = getIsInvalid(field, apiErrors)
 
                   return (
-                    <Field data-invalid={isInvalid}>
-                      <Label className="text-sm font-medium">Confirm Password</Label>
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Confirm Password">
                       <Input
                         id={field.name}
                         name={field.name}
@@ -452,8 +510,7 @@ function RouteComponent() {
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
                       />
-                      {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
-                    </Field>
+                    </FormFieldWrapper>
                   )
                 }}
               />
@@ -468,7 +525,7 @@ function RouteComponent() {
                 >
                   Reset
                 </Button>
-                <Button type="submit" className="cursor-pointer" disabled={isPasswordPending}>
+                <Button type="submit" className="cursor-pointer" disabled={isPasswordPending || !passwordForm.state.isValid }>
                   {isPasswordPending ? 'Saving...' : 'Update Password'}
                 </Button>
               </div>
@@ -536,20 +593,20 @@ function RouteComponent() {
                   }}
                   children={(field: AnyFieldApi) => {
                     const apiErrors = getApiErrors(field, detailsValidationErrors)
-                    const isInvalid = getIsInvalid(field, apiErrors)
+                    
 
                     return (
-                      <Field data-invalid={isInvalid}>
-                        <Label className="text-sm font-medium">Username</Label>
-                        <Input
+                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Username">
+                         <Input
                           id={field.name}
                           name={field.name}
                           value={field.state.value}
+                          disabled
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
                         />
-                        {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
-                      </Field>
+                      </FormFieldWrapper>
+                    
                     )
                   }}
                 />
@@ -705,6 +762,307 @@ function RouteComponent() {
                           onChange={(e) => field.handleChange(e.target.value)}
                         />
                         {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
+                      </Field>
+                    )
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="mb-3 font-medium">Company Information</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <detailsForm.Field
+                  name="companyName"
+                  validators={{
+                    onChange: ({ value }: { value: string }) =>
+                      value && value.length < 2
+                        ? 'Company name must be at least 2 characters'
+                        : undefined,
+                  }}
+                  children={(field: AnyFieldApi) => {
+                    const apiErrors = getApiErrors(field, detailsValidationErrors)
+                    const isInvalid = getIsInvalid(field, apiErrors)
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <Label className="text-sm font-medium">Company Name</Label>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Enter company name"
+                        />
+                        {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
+                      </Field>
+                    )
+                  }}
+                />
+
+                <detailsForm.Field
+                  name="companyEmail"
+                  validators={{
+                    onChange: ({ value }: { value: string }) =>
+                      value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+                        ? 'Invalid email format'
+                        : undefined,
+                  }}
+                  children={(field: AnyFieldApi) => {
+                    const apiErrors = getApiErrors(field, detailsValidationErrors)
+                    const isInvalid = getIsInvalid(field, apiErrors)
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <Label className="text-sm font-medium">Company Email</Label>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          type="email"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Enter company email"
+                        />
+                        {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
+                      </Field>
+                    )
+                  }}
+                />
+
+                <detailsForm.Field
+                  name="companyPhone"
+                  validators={{
+                    onChange: ({ value }: { value: string }) =>
+                      value && value.length < 6
+                        ? 'Phone number must be at least 6 characters'
+                        : undefined,
+                  }}
+                  children={(field: AnyFieldApi) => {
+                    const apiErrors = getApiErrors(field, detailsValidationErrors)
+                    const isInvalid = getIsInvalid(field, apiErrors)
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <Label className="text-sm font-medium">Company Phone</Label>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Enter company phone"
+                        />
+                        {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
+                      </Field>
+                    )
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="mb-3 font-medium">Company Address</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <detailsForm.Field
+                  name="companyStreet"
+                  validators={{
+                    onChange: ({ value }: { value: string }) =>
+                      value && value.length < 2
+                        ? 'Street address must be at least 2 characters'
+                        : undefined,
+                  }}
+                  children={(field: AnyFieldApi) => {
+                    const apiErrors = getApiErrors(field, detailsValidationErrors)
+                    const isInvalid = getIsInvalid(field, apiErrors)
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <Label className="text-sm font-medium">Street Address</Label>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Enter street address"
+                        />
+                        {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
+                      </Field>
+                    )
+                  }}
+                />
+
+                <detailsForm.Field
+                  name="companyCity"
+                  validators={{
+                    onChange: ({ value }: { value: string }) =>
+                      value && value.length < 2
+                        ? 'City must be at least 2 characters'
+                        : undefined,
+                  }}
+                  children={(field: AnyFieldApi) => {
+                    const apiErrors = getApiErrors(field, detailsValidationErrors)
+                    const isInvalid = getIsInvalid(field, apiErrors)
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <Label className="text-sm font-medium">City</Label>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Enter city"
+                        />
+                        {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
+                      </Field>
+                    )
+                  }}
+                />
+
+                <detailsForm.Field
+                  name="companyState"
+                  validators={{
+                    onChange: ({ value }: { value: string }) =>
+                      value && value.length < 2
+                        ? 'State must be at least 2 characters'
+                        : undefined,
+                  }}
+                  children={(field: AnyFieldApi) => {
+                    const apiErrors = getApiErrors(field, detailsValidationErrors)
+                    const isInvalid = getIsInvalid(field, apiErrors)
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <Label className="text-sm font-medium">State</Label>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Enter state"
+                        />
+                        {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
+                      </Field>
+                    )
+                  }}
+                />
+
+                <detailsForm.Field
+                  name="companyZipCode"
+                  validators={{
+                    onChange: ({ value }: { value: string }) =>
+                      value && value.length < 3
+                        ? 'Zip code must be at least 3 characters'
+                        : undefined,
+                  }}
+                  children={(field: AnyFieldApi) => {
+                    const apiErrors = getApiErrors(field, detailsValidationErrors)
+                    const isInvalid = getIsInvalid(field, apiErrors)
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <Label className="text-sm font-medium">Zip Code</Label>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Enter zip code"
+                        />
+                        {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
+                      </Field>
+                    )
+                  }}
+                />
+
+                <detailsForm.Field
+                  name="companyCountry"
+                  validators={{
+                    onChange: ({ value }: { value: string }) =>
+                      value && value.length < 2
+                        ? 'Country must be at least 2 characters'
+                        : undefined,
+                  }}
+                  children={(field: AnyFieldApi) => {
+                    const apiErrors = getApiErrors(field, detailsValidationErrors)
+                    const isInvalid = getIsInvalid(field, apiErrors)
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <Label className="text-sm font-medium">Country</Label>
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          placeholder="Enter country"
+                        />
+                        {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
+                      </Field>
+                    )
+                  }}
+                />
+
+                <detailsForm.Field
+                  name="companyAddressType"
+                  validators={{
+                    onChange: ({ value }: { value: string }) =>
+                      !value ? 'Address type is required' : undefined,
+                  }}
+                  children={(field: AnyFieldApi) => {
+                    const apiErrors = getApiErrors(field, detailsValidationErrors)
+                    const isInvalid = getIsInvalid(field, apiErrors)
+
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <Label className="text-sm font-medium">Address Type</Label>
+                        <Select
+                          value={field.state.value}
+                          onValueChange={(value) => field.handleChange(value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select address type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="work">Work</SelectItem>
+                            <SelectItem value="home">Home</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {isInvalid ? <FieldError errors={mapFieldErrors(field, apiErrors)} /> : null}
+                      </Field>
+                    )
+                  }}
+                />
+              </div>
+
+              <div className="mt-4">
+                <detailsForm.Field
+                  name="companyIsPrimary"
+                  children={(field: AnyFieldApi) => {
+                    return (
+                      <Field>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            id={field.name}
+                            name={field.name}
+                            type="checkbox"
+                            checked={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <Label htmlFor={field.name} className="text-sm font-medium">
+                            Mark as primary address
+                          </Label>
+                        </div>
                       </Field>
                     )
                   }}

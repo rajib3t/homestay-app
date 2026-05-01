@@ -64,13 +64,28 @@ export const profileImageUpload = async (id: string, payload: { image: string })
 
   return protectedApi.put<ApiResponse<UserData>>(`/users/${id}/profile-image`, { image });
 };
-
+export const updateUserPassword = async (
+  id: string,
+ 
+  newPassword: string,
+ 
+): Promise<ApiResponse<UserData>> => {
+  try {
+    const response = await protectedApi.put<ApiResponse<UserData>>(`/users/${id}/password`, {
+      new_password: newPassword,
+    });
+    return response.data;
+  } catch (error) {
+    throw error as ApiError;
+  }
+};
 export const updateUser = async (
   id: string,
   userData: Partial<CreateUserData>
 ): Promise<ApiResponse<UserData>> => {
   try {
-    const response = await protectedApi.put<ApiResponse<UserData>>(`/users/${id}`, userData);
+    const { username, user_type, ...dataWithoutUsername } = userData;
+    const response = await protectedApi.put<ApiResponse<UserData>>(`/users/${id}`, dataWithoutUsername);
     return response.data;
   } catch (error) {
     throw error as ApiError;

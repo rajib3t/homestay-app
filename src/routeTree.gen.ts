@@ -27,6 +27,8 @@ import { Route as AuthenticatedAdminAmenitiesRouteImport } from './routes/_authe
 import { Route as publicLayoutAboutRouteImport } from './routes/(public)/_layout/about'
 import { Route as authLayoutLoginRouteImport } from './routes/(auth)/_layout/login'
 import { Route as AuthenticatedAdminVendorsIndexRouteImport } from './routes/_authenticated/_admin/vendors/index'
+import { Route as AuthenticatedAdminPropertiesIndexRouteImport } from './routes/_authenticated/_admin/properties/index'
+import { Route as AuthenticatedAdminPropertiesAddRouteImport } from './routes/_authenticated/_admin/properties/add'
 import { Route as AuthenticatedAdminVendorsVendorIDEditRouteImport } from './routes/_authenticated/_admin/vendors/$vendorID/edit'
 
 const TestHeadRoute = TestHeadRouteImport.update({
@@ -123,6 +125,18 @@ const AuthenticatedAdminVendorsIndexRoute =
     path: '/vendors/',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminPropertiesIndexRoute =
+  AuthenticatedAdminPropertiesIndexRouteImport.update({
+    id: '/properties/',
+    path: '/properties/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminPropertiesAddRoute =
+  AuthenticatedAdminPropertiesAddRouteImport.update({
+    id: '/properties/add',
+    path: '/properties/add',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminVendorsVendorIDEditRoute =
   AuthenticatedAdminVendorsVendorIDEditRouteImport.update({
     id: '/vendors/$vendorID/edit',
@@ -144,6 +158,8 @@ export interface FileRoutesByFullPath {
   '/countries': typeof AuthenticatedAdminCountriesRoute
   '/facility': typeof AuthenticatedAdminFacilityRoute
   '/locations': typeof AuthenticatedAdminLocationsRoute
+  '/properties/add': typeof AuthenticatedAdminPropertiesAddRoute
+  '/properties/': typeof AuthenticatedAdminPropertiesIndexRoute
   '/vendors/': typeof AuthenticatedAdminVendorsIndexRoute
   '/vendors/$vendorID/edit': typeof AuthenticatedAdminVendorsVendorIDEditRoute
 }
@@ -161,6 +177,8 @@ export interface FileRoutesByTo {
   '/countries': typeof AuthenticatedAdminCountriesRoute
   '/facility': typeof AuthenticatedAdminFacilityRoute
   '/locations': typeof AuthenticatedAdminLocationsRoute
+  '/properties/add': typeof AuthenticatedAdminPropertiesAddRoute
+  '/properties': typeof AuthenticatedAdminPropertiesIndexRoute
   '/vendors': typeof AuthenticatedAdminVendorsIndexRoute
   '/vendors/$vendorID/edit': typeof AuthenticatedAdminVendorsVendorIDEditRoute
 }
@@ -183,6 +201,8 @@ export interface FileRoutesById {
   '/_authenticated/_admin/facility': typeof AuthenticatedAdminFacilityRoute
   '/_authenticated/_admin/locations': typeof AuthenticatedAdminLocationsRoute
   '/(public)/_layout/': typeof publicLayoutIndexRoute
+  '/_authenticated/_admin/properties/add': typeof AuthenticatedAdminPropertiesAddRoute
+  '/_authenticated/_admin/properties/': typeof AuthenticatedAdminPropertiesIndexRoute
   '/_authenticated/_admin/vendors/': typeof AuthenticatedAdminVendorsIndexRoute
   '/_authenticated/_admin/vendors/$vendorID/edit': typeof AuthenticatedAdminVendorsVendorIDEditRoute
 }
@@ -202,6 +222,8 @@ export interface FileRouteTypes {
     | '/countries'
     | '/facility'
     | '/locations'
+    | '/properties/add'
+    | '/properties/'
     | '/vendors/'
     | '/vendors/$vendorID/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -219,6 +241,8 @@ export interface FileRouteTypes {
     | '/countries'
     | '/facility'
     | '/locations'
+    | '/properties/add'
+    | '/properties'
     | '/vendors'
     | '/vendors/$vendorID/edit'
   id:
@@ -240,6 +264,8 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/facility'
     | '/_authenticated/_admin/locations'
     | '/(public)/_layout/'
+    | '/_authenticated/_admin/properties/add'
+    | '/_authenticated/_admin/properties/'
     | '/_authenticated/_admin/vendors/'
     | '/_authenticated/_admin/vendors/$vendorID/edit'
   fileRoutesById: FileRoutesById
@@ -379,6 +405,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminVendorsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/properties/': {
+      id: '/_authenticated/_admin/properties/'
+      path: '/properties'
+      fullPath: '/properties/'
+      preLoaderRoute: typeof AuthenticatedAdminPropertiesIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/properties/add': {
+      id: '/_authenticated/_admin/properties/add'
+      path: '/properties/add'
+      fullPath: '/properties/add'
+      preLoaderRoute: typeof AuthenticatedAdminPropertiesAddRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/vendors/$vendorID/edit': {
       id: '/_authenticated/_admin/vendors/$vendorID/edit'
       path: '/vendors/$vendorID/edit'
@@ -396,6 +436,8 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminCountriesRoute: typeof AuthenticatedAdminCountriesRoute
   AuthenticatedAdminFacilityRoute: typeof AuthenticatedAdminFacilityRoute
   AuthenticatedAdminLocationsRoute: typeof AuthenticatedAdminLocationsRoute
+  AuthenticatedAdminPropertiesAddRoute: typeof AuthenticatedAdminPropertiesAddRoute
+  AuthenticatedAdminPropertiesIndexRoute: typeof AuthenticatedAdminPropertiesIndexRoute
   AuthenticatedAdminVendorsIndexRoute: typeof AuthenticatedAdminVendorsIndexRoute
   AuthenticatedAdminVendorsVendorIDEditRoute: typeof AuthenticatedAdminVendorsVendorIDEditRoute
 }
@@ -407,6 +449,9 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminCountriesRoute: AuthenticatedAdminCountriesRoute,
   AuthenticatedAdminFacilityRoute: AuthenticatedAdminFacilityRoute,
   AuthenticatedAdminLocationsRoute: AuthenticatedAdminLocationsRoute,
+  AuthenticatedAdminPropertiesAddRoute: AuthenticatedAdminPropertiesAddRoute,
+  AuthenticatedAdminPropertiesIndexRoute:
+    AuthenticatedAdminPropertiesIndexRoute,
   AuthenticatedAdminVendorsIndexRoute: AuthenticatedAdminVendorsIndexRoute,
   AuthenticatedAdminVendorsVendorIDEditRoute:
     AuthenticatedAdminVendorsVendorIDEditRoute,

@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { env } from '@/lib/env'
 
+
 const menuItems: Array<{
   title: string
   icon: any
@@ -60,6 +61,14 @@ const menuItems: Array<{
     title: 'Vendors',
     icon: Component,
     url: '/vendors',
+  },
+  {
+    title: 'Properties',
+    icon: Component,
+    children: [
+      {title: "All Properties", url: "/properties" },
+      {title: "Add Property", url: "/properties/add" },
+    ]
   },
   {
     title: 'Bookings',

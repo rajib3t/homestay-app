@@ -11,7 +11,7 @@ const AmenitiesHeader: React.FC<AmenitiesHeaderProps> = ({ setOpenNewAmenityModa
                 title="Amenities"
                 description="Manage the amenities available for homestays."
                 addLabel="Add Amenity"
-                openAddModal={false}
+               
                 setOpenAddModal={setOpenNewAmenityModal}
                 
             />

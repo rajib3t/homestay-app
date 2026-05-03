@@ -49,7 +49,7 @@ class ApiClient {
 
     const config = {
       baseURL,
-      timeout: 10000,
+      timeout: 30000,
       withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
@@ -158,7 +158,6 @@ class ApiClient {
       this.clearAuth()
       return Promise.reject({
         ...apiError,
-        message: 'No refresh token available. Please login again.',
         code: 'NO_REFRESH_TOKEN',
       })
     }
@@ -177,13 +176,36 @@ class ApiClient {
       }
       originalRequest.headers.Authorization = `Bearer ${newToken}`
 
-      // Retry the original request with the new token
-      return this.protectedApi(originalRequest)
+      // Retry the original request with the new token using the appropriate method
+      const method = originalRequest.method?.toLowerCase()
+      const url = originalRequest.url
+      const data = originalRequest.data
+      const config = { ...originalRequest }
+
+      // Remove properties that would cause issues with retry
+      delete config.method
+      delete config.url
+      delete config.data
+
+      switch (method) {
+        case 'get':
+          return this.protectedGet(url, config)
+        case 'post':
+          return this.protectedPost(url, data, config)
+        case 'put':
+          return this.protectedPut(url, data, config)
+        case 'patch':
+          return this.protectedPatch(url, data, config)
+        case 'delete':
+          return this.protectedDelete(url, config)
+        default:
+          // Fallback to direct axios call for other methods
+          return this.protectedApi(originalRequest)
+      }
     } catch (refreshError: any) {
       this.clearAuth()
       return Promise.reject({
         ...apiError,
-        message: refreshError?.message || 'Session expired. Please login again.',
         code: 'SESSION_EXPIRED',
       })
     } finally {

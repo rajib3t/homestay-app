@@ -90,6 +90,7 @@ export function AppSidebar() {
   const isCollapsed = state === 'collapsed'
   const [openItems, setOpenItems] = useState<Record<string, boolean>>(getSidebarOpen())
   const normalizePath = (p?: string) => {
+   
     if (!p) return '/'
     if (p === '/') return p
     return p.replace(/\/+$/, '') || '/'
@@ -102,6 +103,7 @@ export function AppSidebar() {
   useEffect(() => {
     const openForPath = (pathname = routerState.location.pathname) => {
       const normalized = normalizePath(pathname)
+      
       setCurrentPath(normalized)
       // Start fresh so unrelated parents are closed when navigating
       const next: Record<string, boolean> = {}

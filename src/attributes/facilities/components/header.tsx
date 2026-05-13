@@ -12,7 +12,8 @@ export const FacilitiesHeader: React.FC<FacilitiesHeaderProps> = ({ onAddFacilit
                 title="Facilities"
                 description="Manage the facilities available for homestays."
                 addLabel="Add Facility"
-                openAddModal={false}
+                addButton={true}
+                
                 setOpenAddModal={onAddFacility}
                 
             />

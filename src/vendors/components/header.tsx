@@ -12,7 +12,7 @@ const VendorHeader: React.FC<VendorHeaderProps> = ({ setOpenNewVendorModal }) =>
                 title="Vendors"
                 description="Manage the vendors associated with your homestays."
                 addLabel="Add Vendor"
-                
+                addButton={true}
                 setOpenAddModal={setOpenNewVendorModal}
                 
             />

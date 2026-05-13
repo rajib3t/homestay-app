@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 
 import { TableHead, TableCell } from '@/components/ui/table'
@@ -42,7 +42,7 @@ const VendorList: React.FC<VendorListProps> = ({
   
   
 }) => {
- const [imgError, setImgError] = useState(false);
+
   
 
 

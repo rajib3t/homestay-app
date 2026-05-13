@@ -5,15 +5,15 @@ interface PropertiesHeaderProps {
     setOpenNewPropertyModal: (open: boolean) => void;
 }
 
-const PropertiesHeader: React.FC<PropertiesHeaderProps> = ({ setOpenNewPropertyModal }) => {
+const PropertiesHeader: React.FC<PropertiesHeaderProps> = ({  }) => {
     return (
         <React.Fragment>
             <AdminHeader
                 title="Properties"
                 description="Manage the properties available for homestays."
                 addLabel="Add Property"
-                addButton={false}
-                
+                addButton={true}
+                setOpenAddModal={() => {}}
                 
             />
            

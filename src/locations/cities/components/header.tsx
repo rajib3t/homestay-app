@@ -12,7 +12,8 @@ export const CityHeader: React.FC<{
       title="Cities"
       description="Manage the cities where your homestays are located."
       addLabel="Add City"
-      openAddModal={props.openNewCityModal}
+      addButton={true}
+      
       setOpenAddModal={props.setOpenNewCityModal}
       
     />

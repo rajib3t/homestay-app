@@ -12,7 +12,7 @@ const BedTypesHeader: React.FC<BedTypesHeaderProps> = ({ setOpenNewBedTypeModal 
                 title="Bed Types"
                 description="Manage the bed types available for homestays."
                 addLabel="Add Bed Type"
-                openAddModal={false}
+                addButton={true}
                 setOpenAddModal={setOpenNewBedTypeModal}
                 
             />

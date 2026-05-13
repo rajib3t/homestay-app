@@ -1,19 +1,25 @@
 import React from "react";
 import { Button } from "../ui/button";
 import { Plus } from "lucide-react";
-
+import { Link } from "@tanstack/react-router";
 
 interface AdminHeaderProps {
     title: string;
     description?: string;
-    addLabel: string;
-    setOpenAddModal: (open: boolean) => void;
+    addButton:boolean;
+    addButtonType?: 'button' | 'link';
+    addLabel?: string;
+    addUrl ?: string
+    setOpenAddModal?: (open: boolean) => void;
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({ 
     title, 
     description,
+    addButton = true,
     addLabel = 'Add New',
+    addButtonType = 'button',
+    addUrl = '#',
     setOpenAddModal
 }) => {
     return (
@@ -30,14 +36,29 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                             </p>
                         )}
                     </div>
-                    <Button
-                        size="sm"
-                        className="gap-2 shadow-sm cursor-pointer"
-                        onClick={() => setOpenAddModal(true)}
-                    >
-                        <Plus className="w-4 h-4" />
-                        {addLabel}
-                    </Button>
+                    {addButton && (
+                        <React.Fragment>
+                        {addButtonType === 'button' && (
+                            <Button
+                            size="sm"
+                            className="gap-2 shadow-sm cursor-pointer"
+                            onClick={() => setOpenAddModal?.(true)}
+                        >
+                            <Plus className="w-4 h-4" />
+                            {addLabel}
+                        </Button>
+                        )}
+                        {addButtonType === 'link' && (
+                            <Link
+                            className="gap-2 shadow-sm cursor-pointer"
+                            to={addUrl}
+                        >
+                            <Plus className="w-4 h-4" />
+                            {addLabel}
+                        </Link>
+                        )}
+                        </React.Fragment>
+                    )}
                 </div>
             </div>
        

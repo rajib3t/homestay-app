@@ -114,6 +114,9 @@ useEffect(() => {
 
     return { previous }
   },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["GET_COUNTRIES", page, limit] })
+  },
 
   onError: (_err, _new, context) => {
     queryClient.setQueryData(

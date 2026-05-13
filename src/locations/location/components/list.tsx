@@ -99,10 +99,7 @@ export const LocationList: React.FC<LocationListProps> = ({
           <React.Fragment >
             <TableCell className="font-medium">
               <div className="flex items-center gap-4">
-                <div className="relative">
-                
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-white" />
-                </div>
+              
 
                 <div className="flex flex-col">
                   <span className=" text-slate-700">{location.name}</span>

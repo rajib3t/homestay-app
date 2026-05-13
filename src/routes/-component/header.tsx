@@ -72,7 +72,7 @@ export const Header: React.FC = () => {
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm">
             <Link 
-              to="/" 
+              to="/dashboard" 
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               Home
@@ -148,7 +148,7 @@ export const Header: React.FC = () => {
                 <Link to="/profile" className="block px-4 py-2 text-sm hover:bg-accent" onClick={() => setMenuOpen(false)}>
                   Profile
                 </Link>
-                <Link to="/" className="block px-4 py-2 text-sm hover:bg-accent" onClick={() => setMenuOpen(false)}>
+                <Link to="/dashboard" className="block px-4 py-2 text-sm hover:bg-accent" onClick={() => setMenuOpen(false)}>
                   Settings
                 </Link>
                 <Separator className="my-1" />

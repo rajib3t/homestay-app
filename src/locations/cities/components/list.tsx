@@ -107,7 +107,7 @@ export const CityList: React.FC<CityListProps> = ({
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-white" />
+                  
                 </div>
 
                 <div className="flex flex-col">

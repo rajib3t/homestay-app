@@ -141,7 +141,7 @@ function RouteComponent() {
   const vendorData = Route.useLoaderData()
   const navigate = Route.useNavigate()
   const queryClient = useQueryClient()
-  const userData = vendorData.data
+  const [userData, setUserData] = React.useState(vendorData.data)
 
   const [imageValidationErrors, setImageValidationErrors] = React.useState<
     Record<string, string[]>
@@ -239,6 +239,7 @@ function RouteComponent() {
 
   const syncForms = React.useCallback(
     (nextUserData: UserData) => {
+      setUserData(nextUserData)
       setImageValidationErrors({})
       setPasswordValidationErrors({})
       setDetailsValidationErrors({})
@@ -255,7 +256,6 @@ function RouteComponent() {
     (response: { data: UserData }, message: string) => {
       syncForms(response.data)
       queryClient.setQueryData(['GET_VENDOR', response.data.id], response)
-      queryClient.setQueryData(['GET_VENDOR', userData.id], response)
       queryClient.invalidateQueries({ queryKey: ['GET_VENDORS'] })
 
       toast.success(message, {
@@ -263,7 +263,7 @@ function RouteComponent() {
         icon: <CircleCheckIcon />,
       })
     },
-    [queryClient, syncForms, userData.id],
+    [queryClient, syncForms],
   )
 
   const handleError = React.useCallback(

@@ -23,6 +23,7 @@ import { Route as AuthenticatedAdminFacilityRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminCountriesRouteImport } from './routes/_authenticated/_admin/countries'
 import { Route as AuthenticatedAdminCitiesRouteImport } from './routes/_authenticated/_admin/cities'
 import { Route as AuthenticatedAdminBedTypesRouteImport } from './routes/_authenticated/_admin/bed-types'
+import { Route as AuthenticatedAdminAppSettingRouteImport } from './routes/_authenticated/_admin/app-setting'
 import { Route as AuthenticatedAdminAmenitiesRouteImport } from './routes/_authenticated/_admin/amenities'
 import { Route as publicLayoutAboutRouteImport } from './routes/(public)/_layout/about'
 import { Route as authLayoutLoginRouteImport } from './routes/(auth)/_layout/login'
@@ -103,6 +104,12 @@ const AuthenticatedAdminBedTypesRoute =
     path: '/bed-types',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAppSettingRoute =
+  AuthenticatedAdminAppSettingRouteImport.update({
+    id: '/app-setting',
+    path: '/app-setting',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAmenitiesRoute =
   AuthenticatedAdminAmenitiesRouteImport.update({
     id: '/amenities',
@@ -153,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof authLayoutLoginRoute
   '/about': typeof publicLayoutAboutRoute
   '/amenities': typeof AuthenticatedAdminAmenitiesRoute
+  '/app-setting': typeof AuthenticatedAdminAppSettingRoute
   '/bed-types': typeof AuthenticatedAdminBedTypesRoute
   '/cities': typeof AuthenticatedAdminCitiesRoute
   '/countries': typeof AuthenticatedAdminCountriesRoute
@@ -172,6 +180,7 @@ export interface FileRoutesByTo {
   '/login': typeof authLayoutLoginRoute
   '/about': typeof publicLayoutAboutRoute
   '/amenities': typeof AuthenticatedAdminAmenitiesRoute
+  '/app-setting': typeof AuthenticatedAdminAppSettingRoute
   '/bed-types': typeof AuthenticatedAdminBedTypesRoute
   '/cities': typeof AuthenticatedAdminCitiesRoute
   '/countries': typeof AuthenticatedAdminCountriesRoute
@@ -195,6 +204,7 @@ export interface FileRoutesById {
   '/(auth)/_layout/login': typeof authLayoutLoginRoute
   '/(public)/_layout/about': typeof publicLayoutAboutRoute
   '/_authenticated/_admin/amenities': typeof AuthenticatedAdminAmenitiesRoute
+  '/_authenticated/_admin/app-setting': typeof AuthenticatedAdminAppSettingRoute
   '/_authenticated/_admin/bed-types': typeof AuthenticatedAdminBedTypesRoute
   '/_authenticated/_admin/cities': typeof AuthenticatedAdminCitiesRoute
   '/_authenticated/_admin/countries': typeof AuthenticatedAdminCountriesRoute
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/about'
     | '/amenities'
+    | '/app-setting'
     | '/bed-types'
     | '/cities'
     | '/countries'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/about'
     | '/amenities'
+    | '/app-setting'
     | '/bed-types'
     | '/cities'
     | '/countries'
@@ -258,6 +270,7 @@ export interface FileRouteTypes {
     | '/(auth)/_layout/login'
     | '/(public)/_layout/about'
     | '/_authenticated/_admin/amenities'
+    | '/_authenticated/_admin/app-setting'
     | '/_authenticated/_admin/bed-types'
     | '/_authenticated/_admin/cities'
     | '/_authenticated/_admin/countries'
@@ -377,6 +390,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBedTypesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/app-setting': {
+      id: '/_authenticated/_admin/app-setting'
+      path: '/app-setting'
+      fullPath: '/app-setting'
+      preLoaderRoute: typeof AuthenticatedAdminAppSettingRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/amenities': {
       id: '/_authenticated/_admin/amenities'
       path: '/amenities'
@@ -431,6 +451,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAmenitiesRoute: typeof AuthenticatedAdminAmenitiesRoute
+  AuthenticatedAdminAppSettingRoute: typeof AuthenticatedAdminAppSettingRoute
   AuthenticatedAdminBedTypesRoute: typeof AuthenticatedAdminBedTypesRoute
   AuthenticatedAdminCitiesRoute: typeof AuthenticatedAdminCitiesRoute
   AuthenticatedAdminCountriesRoute: typeof AuthenticatedAdminCountriesRoute
@@ -444,6 +465,7 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAmenitiesRoute: AuthenticatedAdminAmenitiesRoute,
+  AuthenticatedAdminAppSettingRoute: AuthenticatedAdminAppSettingRoute,
   AuthenticatedAdminBedTypesRoute: AuthenticatedAdminBedTypesRoute,
   AuthenticatedAdminCitiesRoute: AuthenticatedAdminCitiesRoute,
   AuthenticatedAdminCountriesRoute: AuthenticatedAdminCountriesRoute,

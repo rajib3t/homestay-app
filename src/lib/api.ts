@@ -342,6 +342,7 @@ class ApiClient {
     data?: unknown,
     config?: AxiosRequestConfig
   ) {
+    
     return this.wrap(this.protectedApi.patch<T>(url, data, config))
   }
 

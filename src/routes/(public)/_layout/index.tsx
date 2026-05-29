@@ -4,6 +4,7 @@ import * as React from 'react'
 import PropertyCard from '@/public/home/property-card'
 
 export const Route = createFileRoute('/(public)/_layout/')({
+  ssr: 'data-only',
   head: () => ({
     title: 'Home',
     meta: [

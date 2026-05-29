@@ -10,9 +10,9 @@ import { logout as performLogout } from "@/services/auth";
 
 import { toast } from "sonner";
 import { useAtom } from 'jotai'
-import {  userEmail, userFirstName, userLastName } from '@/store/auth'
+import {  userEmail, userFirstName, userLastName, userType } from '@/store/auth'
 import { useProfile } from "@/hooks/use-profile";
-
+import { useSetting } from "@/hooks/app-setting";
 export const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -22,11 +22,11 @@ export const Header: React.FC = () => {
   
   // Use the profile hook to ensure data is loaded and synced with atoms
   useProfile();
-
+  useSetting();
   const [userMail] = useAtom<string | null>(userEmail)
   const [firstName] = useAtom<string | null>(userFirstName)
   const [lastName] = useAtom<string | null>(userLastName)
-  
+  const [userTypeValue] = useAtom<string | null>(userType)
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (!containerRef.current) return;
@@ -148,9 +148,17 @@ export const Header: React.FC = () => {
                 <Link to="/profile" className="block px-4 py-2 text-sm hover:bg-accent" onClick={() => setMenuOpen(false)}>
                   Profile
                 </Link>
-                <Link to="/dashboard" className="block px-4 py-2 text-sm hover:bg-accent" onClick={() => setMenuOpen(false)}>
-                  Settings
-                </Link>
+                
+                {userTypeValue === 'admin' && (
+                    <React.Fragment>
+                      <Separator className="my-1" />
+                      <Link to="/app-setting" className="block px-4 py-2 text-sm hover:bg-accent" onClick={() => setMenuOpen(false)}>
+                        App Setting
+                      </Link>
+                  
+                    </React.Fragment>
+                )}
+               
                 <Separator className="my-1" />
             
                 <button 

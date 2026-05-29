@@ -4,6 +4,7 @@ import { Outlet } from '@tanstack/react-router'
 import  Header  from '../-component/public/header'
 import  Footer from '../-component/public/footer'
 export const Route = createFileRoute('/(public)/_layout')({
+  ssr: true,
   component: RouteComponent,
 })
 

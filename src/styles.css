@@ -3,7 +3,20 @@
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
-
+@font-face {
+  font-family: 'Glitten';
+  src: url('./fonts/Glitten-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Valleki';
+  src: url('./fonts/valleki.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 body {
   @apply m-0;
   font-family:
@@ -97,6 +110,8 @@ code {
 }
 
 @theme inline {
+  --font-valleki:'Valleki';
+  --font-glitten: 'Glitten', cursive;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

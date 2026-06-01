@@ -1,4 +1,4 @@
-import { protectedApi } from '@/lib/api'
+import { protectedApi, publicApi } from '@/lib/api'
 import type { ApiError } from '@/lib/api'
 import type { ApiResponse } from '@/types/common'
 import type {
@@ -69,11 +69,14 @@ export const mergeSettingAfterSave = (
 }
 
 class SettingService {
-  constructor(private api: typeof protectedApi) {}
+  constructor(
+    private readonly readApi: typeof publicApi,
+    private readonly writeApi: typeof protectedApi,
+  ) {}
 
   async getSetting<T = AppSetting>(): Promise<ApiResponse<T>> {
     try {
-      const response = await this.api.get<ApiResponse<T>>(`/setting`)
+      const response = await this.readApi.get<ApiResponse<T>>(`/setting`)
       return response.data
     } catch (error) {
       const apiError = error as ApiError
@@ -86,7 +89,7 @@ class SettingService {
   ): Promise<ApiResponse<AppSetting>> {
     const payload = buildSettingUpdatePayload(value)
     try {
-      const response = await this.api.patch<ApiResponse<AppSetting>>(
+      const response = await this.writeApi.patch<ApiResponse<AppSetting>>(
         `/setting`,
         payload,
       )
@@ -98,4 +101,4 @@ class SettingService {
   }
 }
 
-export const settingService = new SettingService(protectedApi)
+export const settingService = new SettingService(publicApi, protectedApi)

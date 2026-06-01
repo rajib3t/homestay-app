@@ -30,7 +30,8 @@ import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { env } from '@/lib/env'
-
+import { useAtomValue } from 'jotai'
+import { appLogo, appName } from '@/store/setting'
 
 const menuItems: Array<{
   title: string
@@ -139,20 +140,28 @@ export function AppSidebar() {
     // TODO: Implement logout functionality
     console.log('Logout clicked')
   }
-
+  const name = useAtomValue(appName)
+  const logo = useAtomValue(appLogo)
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          {/* <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Activity className="h-5 w-5" />
-          </div>
-          {!isCollapsed && (
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold">{env.get('APP_NAME')}</span>
-              {/* <span className="text-xs text-muted-foreground">{env.get('APP_DESCRIPTION')}</span> */}
-            </div>
-          )}
+          </div> */}
+          
+{logo && (
+  <img
+    src={logo}
+    alt={name || 'App Logo'}
+    className="h-14 w-14 rounded object-contain flex-shrink-0"
+  />
+)}
+{/* {!isCollapsed && (
+  <h1 className="font-glitten text-xl font-normal text-primary truncate">
+    {name || 'Homestay'}
+  </h1>
+)} */}
         </div>
       </SidebarHeader>
       

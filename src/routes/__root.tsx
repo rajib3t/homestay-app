@@ -1,7 +1,8 @@
-import { Outlet, createRootRouteWithContext ,   useMatches,} from '@tanstack/react-router'
+import { Outlet, createRootRouteWithContext, useMatches } from '@tanstack/react-router'
 import { QueryClient } from '@tanstack/react-query'
 import React, { useLayoutEffect } from 'react'
 import { Toaster } from "@/components/ui/sonner"
+import { useAtomValue } from 'jotai'
 
 // Lazy load devtools only in development
 const TanStackRouterDevtools = import.meta.env.PROD
@@ -14,6 +15,8 @@ const TanStackRouterDevtools = import.meta.env.PROD
 
 import { ErrorView } from '@/components/error-pages/error-view'
 import { env } from '@/lib/env'
+import { useSetting } from '@/hooks/app-setting'
+import { appName as appNameAtom, favIcon as favIconAtom } from '@/store/setting'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -44,6 +47,10 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function Meta({ children }: { children: React.ReactNode }) {
   const matches = useMatches()
+  // Load settings once at the app root so public/admin pages share it.
+  useSetting()
+  const appName = useAtomValue(appNameAtom) || env.get('APP_NAME') || 'MyApp'
+  const favIcon = useAtomValue(favIconAtom)
 
   const head = React.useMemo(() => {
     // For each match, prefer `head` (function or object) then `meta`.
@@ -102,8 +109,6 @@ function Meta({ children }: { children: React.ReactNode }) {
 
   useLayoutEffect(() => {
     if (!head) return
-
-    const appName = env.get('APP_NAME') || 'MyApp'
 
     // Title
     const titleSource = head.title ?? head.ogTitle ?? head.ogTitle
@@ -164,7 +169,29 @@ function Meta({ children }: { children: React.ReactNode }) {
       }
       link.setAttribute('href', head.canonical)
     }
-  }, [head])
+  }, [head, appName])
+
+  useLayoutEffect(() => {
+    if (!favIcon) return
+
+    // Update favicon dynamically from settings.
+    const relSelectors = [
+      'link[rel="icon"]',
+      'link[rel="shortcut icon"]',
+      'link[rel="apple-touch-icon"]',
+    ]
+    const existing =
+      relSelectors
+        .map((sel) => document.head.querySelector<HTMLLinkElement>(sel))
+        .find(Boolean) ?? null
+
+    const link = existing ?? document.createElement('link')
+    if (!existing) {
+      link.setAttribute('rel', 'icon')
+      document.head.appendChild(link)
+    }
+    link.setAttribute('href', favIcon)
+  }, [favIcon])
 
   return children
 }

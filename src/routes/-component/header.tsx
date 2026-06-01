@@ -13,6 +13,7 @@ import { useAtom } from 'jotai'
 import {  userEmail, userFirstName, userLastName, userType } from '@/store/auth'
 import { useProfile } from "@/hooks/use-profile";
 import { useSetting } from "@/hooks/app-setting";
+
 export const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);

@@ -26,9 +26,55 @@ interface PropertyFormProps {
   validationErrors?: Record<string, string[]>;
   vendorOptions?: { value: string | number; label: string }[];
   countryOptions?: { value: string | number; label: string }[];
+  amenities?: { value: string | number; label: string }[];
+  facilities?: { value: string | number; label: string }[];
+  roomTypes?: { value: string | number; label: string }[];
 }
 
 const GOOGLE_MAPS_API_KEY = env.get("GOOGLE_MAPS_API_KEY") as string;
+
+/* -----------------------------------------------------------------------
+ * Shared style tokens
+ * Centralizing these keeps every field visually consistent and means a
+ * single edit (e.g. changing the focus ring color) updates the whole form.
+ * --------------------------------------------------------------------- */
+const styles = {
+  input:
+    "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 " +
+    "placeholder:text-gray-400 transition-shadow focus:outline-none focus:ring-2 " +
+    "focus:ring-blue-500 focus:border-blue-500",
+  inputReadOnly:
+    "w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 " +
+    "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500",
+  select:
+    "w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm " +
+    "text-gray-900 transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500",
+  sectionCard: "rounded-xl border border-gray-200 bg-gray-50 p-6",
+  sectionTitle: "mb-4 border-b border-gray-200 pb-2 text-lg font-medium text-gray-900",
+  checkboxLabel:
+    "flex cursor-pointer select-none items-center space-x-3 rounded-lg border border-transparent " +
+    "p-2 transition-colors hover:border-gray-200 hover:bg-gray-100",
+  checkbox: "h-5 w-5 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500",
+  fieldGrid: "grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3",
+} as const;
+
+/* -----------------------------------------------------------------------
+ * Small structural helper: a titled section used for Amenities, Facilities
+ * and Rooms, so the three blocks share one consistent frame.
+ * --------------------------------------------------------------------- */
+const FormSection: React.FC<{ title: string; children: React.ReactNode; action?: React.ReactNode }> = ({
+  title,
+  children,
+  action,
+}) => (
+  <section className="col-span-full mt-8">
+    <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-2">
+      <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+      {action}
+    </div>
+    {children}
+  </section>
+);
 
 function useGooglePlacesScript() {
   const [loaded, setLoaded] = useState(() => !!window.google?.maps?.places);
@@ -76,7 +122,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   useEffect(() => {
     if (!isGoogleLoaded || !containerRef.current || widgetMounted.current) return;
 
-    const PlacesLib = (window.google?.maps?.places) as any;
+    const PlacesLib = window.google?.maps?.places as any;
 
     if (PlacesLib?.PlaceAutocompleteElement) {
       widgetMounted.current = true;
@@ -87,11 +133,13 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
       containerRef.current.appendChild(autocompleteEl);
 
-      autocompleteEl.addEventListener("gmp-placeselect", async (event: any) => {
-        const place = event.place;
+      autocompleteEl.addEventListener("gmp-select", async (event: any) => {
+        const placePrediction = event.placePrediction;
+        const place = placePrediction?.toPlace ? placePrediction.toPlace() : event.place;
+
+        if (!place) return;
 
         try {
-          // Try the new API first
           await place.fetchFields({
             fields: ["displayName", "formattedAddress", "location"],
           });
@@ -103,26 +151,14 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
           if (lat !== undefined && lng !== undefined) {
             onPlaceSelect(lat, lng, address);
           }
-        } catch {
-          // Fallback: use Geocoder with placeId (works on demo keys)
-          const geocoder = new window.google.maps.Geocoder();
-          geocoder.geocode({ placeId: place.id }, (results: any, status: any) => {
-            if (status === "OK" && results?.[0]) {
-              const loc = results[0].geometry.location;
-              const address = results[0].formatted_address ?? place.displayName ?? "";
-              onPlaceSelect(loc.lat(), loc.lng(), address);
-            } else {
-              console.warn("Geocoder failed:", status);
-            }
-          });
+        } catch (err) {
+          console.error("[places] fetchFields error:", err);
         }
       });
 
       autocompleteEl.addEventListener("blur", onBlur);
       setWebComponentReady(true);
-
     } else if (PlacesLib?.Autocomplete) {
-      // Legacy fallback
       widgetMounted.current = true;
 
       if (!fallbackRef.current) return;
@@ -131,9 +167,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
       });
 
       ac.addListener("place_changed", () => {
-
         const place = ac.getPlace();
-        console.log(place);
         const lat = place.geometry?.location?.lat();
         const lng = place.geometry?.location?.lng();
         const address = place.formatted_address ?? fallbackRef.current?.value ?? "";
@@ -146,11 +180,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
   return (
     <div className="relative w-full">
-      <div
-        ref={containerRef}
-        className="w-full"
-        style={{ display: webComponentReady ? "block" : "none" }}
-      />
+      <div ref={containerRef} className="w-full" style={{ display: webComponentReady ? "block" : "none" }} />
       <input
         ref={fallbackRef}
         type="text"
@@ -169,11 +199,19 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   validationErrors,
   vendorOptions = [],
   countryOptions = [],
+  amenities = [],
+  facilities = [],
+  roomTypes = [],
 }) => {
   const [mainLogo, setMainLogo] = useState<string | null>(null);
+  const [coverLogo, setCoverLogo] = useState<string | null>(null);
+  const [tradeLicencePreview, setTradeLicencePreview] = useState<string | null>(null);
+  const [galleryImagesState, setGalleryImagesState] = useState<Record<number, string>>({});
   const [managedCountryOptions, setManagedCountryOptions] = useState(countryOptions);
   const [managedCityOptions, setManagedCityOptions] = useState<{ value: string | number; label: string }[]>([]);
-  const [managedLocationOptions, setManagedLocationOptions] = useState<{ value: string | number; label: string }[]>([]);
+  const [managedLocationOptions, setManagedLocationOptions] = useState<{ value: string | number; label: string }[]>(
+    [],
+  );
 
   const currentCountry = useStore(form.store, (state) => state.values.country);
   const currentCity = useStore(form.store, (state) => state.values.city);
@@ -198,9 +236,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       }
 
       try {
-        const filterObj = { filter: [{ search_field: 'country', search_value: selectedCountry }] } as SearchParams;
+        const filterObj = { filter: [{ search_field: "country", search_value: selectedCountry }] } as SearchParams;
         const opts = getCitiesQuery(1, 100, undefined, undefined, filterObj)();
-        const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCities(1, 100, undefined, undefined, filterObj);
+        const res =
+          opts && typeof opts.queryFn === "function"
+            ? await (opts.queryFn as any)()
+            : await fetchCities(1, 100, undefined, undefined, filterObj);
         if (!abortController.signal.aborted) {
           const items = res?.data ?? [];
           setManagedCityOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
@@ -237,9 +278,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       }
 
       try {
-        const filterObj = { filter: [{ search_field: 'city', search_value: selectedCity }] } as SearchParams;
+        const filterObj = { filter: [{ search_field: "city", search_value: selectedCity }] } as SearchParams;
         const opts = getLocationsQuery(1, 100, undefined, undefined, filterObj)();
-        const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchLocations(1, 100, undefined, undefined, filterObj);
+        const res =
+          opts && typeof opts.queryFn === "function"
+            ? await (opts.queryFn as any)()
+            : await fetchLocations(1, 100, undefined, undefined, filterObj);
         if (!abortController.signal.aborted) {
           const items = res?.data ?? [];
           setManagedLocationOptions(items.map((location: any) => ({ value: location.id, label: location.name })));
@@ -273,30 +317,33 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     try {
       let filterObj: SearchParams | undefined;
       if (q) {
-        const parts = q.trim().split(' ');
+        const parts = q.trim().split(" ");
         if (parts.length > 1) {
           filterObj = {
             filter: [
-              { search_field: 'first_name', search_value: parts[0] },
-              { search_field: 'last_name', search_value: parts[1] },
-              { search_field: 'user_type', search_value: 'vendor' },
+              { search_field: "first_name", search_value: parts[0] },
+              { search_field: "last_name", search_value: parts[1] },
+              { search_field: "user_type", search_value: "vendor" },
             ],
           };
         } else {
           filterObj = {
             filter: [
-              { search_field: 'first_name', search_value: q },
-              { search_field: 'user_type', search_value: 'vendor' },
+              { search_field: "first_name", search_value: q },
+              { search_field: "user_type", search_value: "vendor" },
             ],
           };
         }
       } else {
-        filterObj = { filter: [{ search_field: 'user_type', search_value: 'vendor' }] };
+        filterObj = { filter: [{ search_field: "user_type", search_value: "vendor" }] };
       }
       const opts = getVendorsQuery(1, 5, undefined, undefined, filterObj)();
-      const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchUsers(1, 5, undefined, undefined, filterObj);
+      const res =
+        opts && typeof opts.queryFn === "function"
+          ? await (opts.queryFn as any)()
+          : await fetchUsers(1, 5, undefined, undefined, filterObj);
       const items = res?.data ?? [];
-      return items.map((c: any) => ({ value: c.id, label: c.first_name + ' ' + c.last_name }));
+      return items.map((c: any) => ({ value: c.id, label: c.first_name + " " + c.last_name }));
     } catch {
       return [];
     }
@@ -306,13 +353,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     try {
       let filterObj: SearchParams | undefined;
       if (q) {
-        filterObj = { filter: [{ search_field: 'name', search_value: q }, { search_field: 'status', search_value: true }] };
+        filterObj = {
+          filter: [
+            { search_field: "name", search_value: q },
+            { search_field: "status", search_value: true },
+          ],
+        };
       } else {
-        filterObj = { filter: [{ search_field: 'status', search_value: true }] };
+        filterObj = { filter: [{ search_field: "status", search_value: true }] };
       }
 
       const opts = getCountriesQuery(1, 100, undefined, undefined, filterObj)();
-      const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCountries(1, 100, undefined, undefined, filterObj);
+      const res =
+        opts && typeof opts.queryFn === "function"
+          ? await (opts.queryFn as any)()
+          : await fetchCountries(1, 100, undefined, undefined, filterObj);
       const items = res?.data ?? [];
       setManagedCountryOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
       return items.map((c: any) => ({ value: c.id, label: c.name }));
@@ -322,103 +377,126 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     }
   }, []);
 
-  const handleCitySearch = useCallback(async (q: string) => {
-    const countryFilterValue = form.state.values.country;
-    if (!countryFilterValue) {
-      return [];
-    }
+  const handleCitySearch = useCallback(
+    async (q: string) => {
+      const countryFilterValue = form.state.values.country;
+      if (!countryFilterValue) {
+        return [];
+      }
 
-    // Options for the currently selected country were already loaded by the
-    // debounced country effect above; avoid re-fetching identical data when
-    // the dropdown opens with an empty query.
-    if (!q) {
-      return managedCityOptions;
-    }
+      // Options for the currently selected country were already loaded by the
+      // debounced country effect above; avoid re-fetching identical data when
+      // the dropdown opens with an empty query.
+      if (!q) {
+        return managedCityOptions;
+      }
 
-    try {
-      const filterObj: SearchParams = {
-        filter: [
-          { search_field: 'name', search_value: q },
-          { search_field: 'country', search_value: countryFilterValue },
-        ],
-      };
+      try {
+        const filterObj: SearchParams = {
+          filter: [
+            { search_field: "name", search_value: q },
+            { search_field: "country", search_value: countryFilterValue },
+          ],
+        };
 
-      const opts = getCitiesQuery(1, 100, undefined, undefined, filterObj)();
-      const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCities(1, 100, undefined, undefined, filterObj);
-      const items = res?.data ?? [];
-      setManagedCityOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
-      return items.map((c: any) => ({ value: c.id, label: c.name }));
-    } catch {
-      setManagedCityOptions([]);
-      return [];
-    }
-  }, [form, managedCityOptions]);
+        const opts = getCitiesQuery(1, 100, undefined, undefined, filterObj)();
+        const res =
+          opts && typeof opts.queryFn === "function"
+            ? await (opts.queryFn as any)()
+            : await fetchCities(1, 100, undefined, undefined, filterObj);
+        const items = res?.data ?? [];
+        setManagedCityOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
+        return items.map((c: any) => ({ value: c.id, label: c.name }));
+      } catch {
+        setManagedCityOptions([]);
+        return [];
+      }
+    },
+    [form, managedCityOptions],
+  );
 
-  const handleLocationSearch = useCallback(async (q: string) => {
-    const cityFilterValue = form.state.values.city;
-    if (!cityFilterValue) {
-      return [];
-    }
+  const handleLocationSearch = useCallback(
+    async (q: string) => {
+      const cityFilterValue = form.state.values.city;
+      if (!cityFilterValue) {
+        return [];
+      }
 
-    // Options for the currently selected city were already loaded by the
-    // debounced city effect above; avoid re-fetching identical data when
-    // the dropdown opens with an empty query.
-    if (!q) {
-      return managedLocationOptions;
-    }
+      // Options for the currently selected city were already loaded by the
+      // debounced city effect above; avoid re-fetching identical data when
+      // the dropdown opens with an empty query.
+      if (!q) {
+        return managedLocationOptions;
+      }
 
-    try {
-      const filterObj: SearchParams = {
-        filter: [
-          { search_field: 'name', search_value: q },
-          { search_field: 'city', search_value: cityFilterValue },
-        ],
-      };
+      try {
+        const filterObj: SearchParams = {
+          filter: [
+            { search_field: "name", search_value: q },
+            { search_field: "city", search_value: cityFilterValue },
+          ],
+        };
 
-      const opts = getLocationsQuery(1, 100, undefined, undefined, filterObj)();
-      const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchLocations(1, 100, undefined, undefined, filterObj);
-      const items = res?.data ?? [];
-      setManagedLocationOptions(items.map((location: any) => ({ value: location.id, label: location.name })));
-      return items.map((location: any) => ({ value: location.id, label: location.name }));
-    } catch {
-      setManagedLocationOptions([]);
-      return [];
-    }
-  }, [form, managedLocationOptions]);
+        const opts = getLocationsQuery(1, 100, undefined, undefined, filterObj)();
+        const res =
+          opts && typeof opts.queryFn === "function"
+            ? await (opts.queryFn as any)()
+            : await fetchLocations(1, 100, undefined, undefined, filterObj);
+        const items = res?.data ?? [];
+        setManagedLocationOptions(items.map((location: any) => ({ value: location.id, label: location.name })));
+        return items.map((location: any) => ({ value: location.id, label: location.name }));
+      } catch {
+        setManagedLocationOptions([]);
+        return [];
+      }
+    },
+    [form, managedLocationOptions],
+  );
 
-  const handleCountryChange = useCallback((field: AnyFieldApi) => (v: string | number) => {
-    field.handleChange(v);
-    form.setFieldValue("city", "");
-    form.setFieldValue("location", "");
-  }, [form]);
+  const handleCountryChange = useCallback(
+    (field: AnyFieldApi) => (v: string | number) => {
+      field.handleChange(v);
+      form.setFieldValue("city", "");
+      form.setFieldValue("location", "");
+    },
+    [form],
+  );
 
-  const handleCityChange = useCallback((field: AnyFieldApi) => (v: string | number) => {
-    field.handleChange(v);
-    form.setFieldValue("location", "");
-  }, [form]);
+  const handleCityChange = useCallback(
+    (field: AnyFieldApi) => (v: string | number) => {
+      field.handleChange(v);
+      form.setFieldValue("location", "");
+    },
+    [form],
+  );
 
-  const handlePlaceSelect = useCallback((field: AnyFieldApi) => (lat: number, lng: number, address: string) => {
-    field.handleChange(address);
-    form.setFieldValue("latitude", lat);
-    form.setFieldValue("longitude", lng);
-  }, [form]);
+  const handlePlaceSelect = useCallback(
+    (field: AnyFieldApi) => (lat: number, lng: number, address: string) => {
+      field.handleChange(address);
+      form.setFieldValue("latitude", lat);
+      form.setFieldValue("longitude", lng);
+    },
+    [form],
+  );
 
   return (
-    <React.Fragment>
-      <Card className="p-4">
-        <CardContent className="p-0">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              form.handleSubmit();
-            }}
-          >
-            <div className="flex gap-6">
-              {/* LEFT: Image Upload */}
-              <div className="w-[340px] shrink-0">
-                <p className="text-sm font-medium mb-2">
-                  Image <span className="text-red-500">*</span>
+    <Card className="p-4 sm:p-6">
+      <CardContent className="p-0">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+          className="space-y-8"
+        >
+          {/* ===================== Top: media + core details ===================== */}
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[340px_1fr]">
+            {/* ---- LEFT: Image upload column ---- */}
+            <div className="flex flex-col gap-6">
+              <div>
+                <p className="mb-2 text-sm font-medium text-gray-900">
+                  Feature Image <span className="text-red-500">*</span>
                 </p>
                 <form.Field
                   name="feature_image"
@@ -433,15 +511,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                           onPreviewChange={(preview) => setMainLogo(preview ?? "")}
                           onValueChange={(value: string) => field.handleChange(value)}
                           onBlur={field.handleBlur}
-                          alt="Property image"
-                          emptyText="Property image"
-                          buttonText="Upload Image"
-                          previewWrapperClassName="h-[200px] w-full rounded-lg overflow-hidden"
+                          alt="Feature image"
+                          emptyText="Feature image"
+                          buttonText="Upload Feature Image"
+                          previewWrapperClassName="h-[200px] w-full overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
                           previewImageClassName="h-full w-full object-cover"
                         />
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Supported Files: <strong>.png, .jpg, .jpeg.</strong>{" "}
-                          Image will be resized into <strong>340x200px</strong>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Supported files: <strong>.png, .jpg, .jpeg</strong>
                         </p>
                       </FormFieldWrapper>
                     );
@@ -449,283 +526,113 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 />
               </div>
 
-              {/* RIGHT: Form Fields Grid */}
-              <div className="flex-1 grid grid-cols-3 gap-x-6 gap-y-4">
-
-                {/* Row 1: Name, Star Rating */}
+              <div>
+                <p className="mb-2 text-sm font-medium text-gray-900">Cover Image</p>
                 <form.Field
-                  name="vendor"
+                  name="cover_image"
                   children={(field: AnyFieldApi) => {
                     const apiErrors = validationErrors?.[field.name] ?? [];
                     return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Vendor">
-                        <SearchableSelect
-                          options={vendorOptions}
-                          value={field.state.value}
-                          onChange={(v) => field.handleChange(v)}
-                          placeholder="Select One"
-                          onSearch={handleVendorSearch}
+                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="">
+                        <UploadImage
+                          id={field.name}
+                          name={field.name}
+                          preview={coverLogo}
+                          onPreviewChange={(preview) => setCoverLogo(preview ?? "")}
+                          onValueChange={(value: string) => field.handleChange(value)}
+                          onBlur={field.handleBlur}
+                          alt="Cover image"
+                          emptyText="Cover image"
+                          buttonText="Upload Cover Image"
+                          previewWrapperClassName="h-[150px] w-full overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
+                          previewImageClassName="h-full w-full object-cover"
                         />
                       </FormFieldWrapper>
                     );
                   }}
                 />
-                <form.Field
-                  name="name"
-                  children={(field: AnyFieldApi) => {
-                    const apiErrors = validationErrors?.[field.name] ?? [];
-                    return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Name">
-                        <input
-                          id={field.name}
-                          name={field.name}
-                          value={field.state.value ?? ""}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Property name"
-                        />
-                      </FormFieldWrapper>
-                    );
-                  }}
-                />
+              </div>
 
+              <div>
+                <p className="mb-2 text-sm font-medium text-gray-900">Gallery Images</p>
                 <form.Field
-                  name="star_rating"
-                  children={(field: AnyFieldApi) => {
-                    const apiErrors = validationErrors?.[field.name] ?? [];
+                  name="gallery_images"
+                  mode="array"
+                  children={(field) => {
+                    const images = field.state.value || [];
                     return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Star Rating">
-                        <select
-                          id={field.name}
-                          name={field.name}
-                          value={field.state.value ?? ""}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      <div className="space-y-4">
+                        {images.map((_: any, i: number) => (
+                          <div key={i} className="relative">
+                            <UploadImage
+                              id={`gallery_images_${i}`}
+                              name={`gallery_images[${i}]`}
+                              preview={galleryImagesState[i] || null}
+                              onPreviewChange={(preview) => {
+                                setGalleryImagesState((prev) => ({ ...prev, [i]: preview ?? "" }));
+                              }}
+                              onValueChange={(value: string) => {
+                                const newImages = [...images];
+                                newImages[i] = value;
+                                field.handleChange(newImages);
+                              }}
+                              alt={`Gallery image ${i + 1}`}
+                              emptyText="Gallery image"
+                              buttonText="Upload Image"
+                              previewWrapperClassName="h-[100px] w-full overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
+                              previewImageClassName="h-full w-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                field.removeValue(i);
+                                setGalleryImagesState((prev) => {
+                                  const next = { ...prev };
+                                  delete next[i];
+                                  return next;
+                                });
+                              }}
+                              aria-label={`Remove gallery image ${i + 1}`}
+                              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white shadow hover:bg-red-600"
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => field.pushValue("")}
+                          className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
                         >
-                          <option value="">Select rating</option>
-                          <option value="1">1 Star</option>
-                          <option value="2">2 Star</option>
-                          <option value="3">3 Star</option>
-                          <option value="4">4 Star</option>
-                          <option value="5">5 Star</option>
-                        </select>
-                      </FormFieldWrapper>
-                    );
-                  }}
-                />
-
-                {/* Empty third column */}
-                <div />
-
-                {/* Row 2: Address — full width */}
-                <form.Field
-                  name="address"
-                  children={(field: AnyFieldApi) => {
-                    const apiErrors = validationErrors?.[field.name] ?? [];
-                    return (
-                      <div className="col-span-3">
-                        <FormFieldWrapper field={field} apiErrors={apiErrors} label="Address">
-                          <AddressAutocomplete
-                            onBlur={field.handleBlur}
-                            onPlaceSelect={handlePlaceSelect(field)}
-                            className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Search and select address..."
-                          />
-                        </FormFieldWrapper>
+                          + Add Gallery Image
+                        </button>
                       </div>
                     );
                   }}
                 />
+              </div>
 
-                {/* Row 3: Latitude, Longitude, Country */}
+              <div>
+                <p className="mb-2 text-sm font-medium text-gray-900">Trade Licence (PDF/Image)</p>
                 <form.Field
-                  name="latitude"
+                  name="trade_licence"
                   children={(field: AnyFieldApi) => {
                     const apiErrors = validationErrors?.[field.name] ?? [];
                     return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Latitude">
-                        <input
+                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="">
+                        <UploadImage
                           id={field.name}
                           name={field.name}
-                          type="number"
-                          step="0.000001"
-                          value={field.state.value ?? ""}
-                          onChange={(e) => field.handleChange(parseFloat(e.target.value))}
+                          preview={tradeLicencePreview}
+                          onPreviewChange={(preview) => setTradeLicencePreview(preview ?? "")}
+                          onValueChange={(value: string) => field.handleChange(value)}
                           onBlur={field.handleBlur}
-                          className="w-full border rounded-md px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="0.000000"
-                          readOnly
-                        />
-                      </FormFieldWrapper>
-                    );
-                  }}
-                />
-
-                <form.Field
-                  name="longitude"
-                  children={(field: AnyFieldApi) => {
-                    const apiErrors = validationErrors?.[field.name] ?? [];
-                    return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Longitude">
-                        <input
-                          id={field.name}
-                          name={field.name}
-                          type="number"
-                          step="0.000001"
-                          value={field.state.value ?? ""}
-                          onChange={(e) => field.handleChange(parseFloat(e.target.value))}
-                          onBlur={field.handleBlur}
-                          className="w-full border rounded-md px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="0.000000"
-                          readOnly
-                        />
-                      </FormFieldWrapper>
-                    );
-                  }}
-                />
-
-                <form.Field
-                  name="country"
-                  children={(field: AnyFieldApi) => {
-                    const apiErrors = validationErrors?.[field.name] ?? [];
-                    return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Country">
-                        <SearchableSelect
-                          options={managedCountryOptions}
-                          value={field.state.value ?? ""}
-                          onChange={handleCountryChange(field)}
-                          placeholder="Select One"
-                          className="w-full"
-                          onSearch={handleCountrySearch}
-                        />
-                      </FormFieldWrapper>
-                    );
-                  }}
-                />
-
-                {/* Row 4: City, Location, Tax Name */}
-                <form.Field
-                  name="city"
-                  children={(field: AnyFieldApi) => {
-                    const apiErrors = validationErrors?.[field.name] ?? [];
-                    return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="City">
-                        <SearchableSelect
-                          options={managedCityOptions}
-                          value={field.state.value ?? ""}
-                          onChange={handleCityChange(field)}
-                          placeholder="Select One"
-                          className="w-full"
-                          onSearch={handleCitySearch}
-                        />
-                      </FormFieldWrapper>
-                    );
-                  }}
-                />
-
-                <form.Field
-                  name="location"
-                  children={(field: AnyFieldApi) => {
-                    const apiErrors = validationErrors?.[field.name] ?? [];
-                    return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Location">
-                        <SearchableSelect
-                          options={managedLocationOptions}
-                          value={field.state.value ?? ""}
-                          onChange={(v) => field.handleChange(v)}
-                          placeholder="Select One"
-                          className="w-full"
-                          onSearch={handleLocationSearch}
-                        />
-                      </FormFieldWrapper>
-                    );
-                  }}
-                />
-
-                <form.Field
-                  name="tax_name"
-                  children={(field: AnyFieldApi) => {
-                    const apiErrors = validationErrors?.[field.name] ?? [];
-                    return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Tax Name">
-                        <input
-                          id={field.name}
-                          name={field.name}
-                          value={field.state.value ?? ""}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Tax name"
-                        />
-                      </FormFieldWrapper>
-                    );
-                  }}
-                />
-
-                {/* Row 5: Tax Percentage, Check In Time, Checkout Time */}
-                <form.Field
-                  name="tax_percentage"
-                  children={(field: AnyFieldApi) => {
-                    const apiErrors = validationErrors?.[field.name] ?? [];
-                    return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Tax Percentage">
-                        <div className="relative">
-                          <input
-                            id={field.name}
-                            name={field.name}
-                            type="number"
-                            step="0.01"
-                            value={field.state.value ?? ""}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            onBlur={field.handleBlur}
-                            className="w-full border rounded-md pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="0.00"
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                            %
-                          </span>
-                        </div>
-                      </FormFieldWrapper>
-                    );
-                  }}
-                />
-
-                <form.Field
-                  name="check_in_time"
-                  children={(field: AnyFieldApi) => {
-                    const apiErrors = validationErrors?.[field.name] ?? [];
-                    return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Check In Time">
-                        <input
-                          id={field.name}
-                          name={field.name}
-                          type="time"
-                          value={field.state.value ?? ""}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </FormFieldWrapper>
-                    );
-                  }}
-                />
-
-                <form.Field
-                  name="checkout_time"
-                  children={(field: AnyFieldApi) => {
-                    const apiErrors = validationErrors?.[field.name] ?? [];
-                    return (
-                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Checkout Time">
-                        <input
-                          id={field.name}
-                          name={field.name}
-                          type="time"
-                          value={field.state.value ?? ""}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          accept="image/*,application/pdf"
+                          alt="Trade Licence"
+                          emptyText="Trade Licence Document"
+                          buttonText="Upload Document"
+                          previewWrapperClassName="h-[150px] w-full overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
+                          previewImageClassName="h-full w-full object-cover"
                         />
                       </FormFieldWrapper>
                     );
@@ -733,10 +640,546 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 />
               </div>
             </div>
-          </form>
-        </CardContent>
-      </Card>
-    </React.Fragment>
+
+            {/* ---- RIGHT: Field grid ---- */}
+            <div className={styles.fieldGrid}>
+              <form.Field
+                name="vendor"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Vendor">
+                      <SearchableSelect
+                        options={vendorOptions}
+                        value={field.state.value}
+                        onChange={(v) => field.handleChange(v)}
+                        placeholder="Select One"
+                        onSearch={handleVendorSearch}
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="name"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Name">
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        value={field.state.value ?? ""}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        className={styles.input}
+                        placeholder="Property name"
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="trade_licence_number"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Trade Licence Number">
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        value={field.state.value ?? ""}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        className={styles.input}
+                        placeholder="Licence number"
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="listing_price"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Listing Price">
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        type="number"
+                        value={field.state.value ?? ""}
+                        onChange={(e) => field.handleChange(parseFloat(e.target.value) || 0)}
+                        onBlur={field.handleBlur}
+                        className={styles.input}
+                        placeholder="0.00"
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="sale_price"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Sale Price">
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        type="number"
+                        value={field.state.value ?? ""}
+                        onChange={(e) => field.handleChange(parseFloat(e.target.value) || 0)}
+                        onBlur={field.handleBlur}
+                        className={styles.input}
+                        placeholder="0.00"
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="is_featured"
+                children={(field: AnyFieldApi) => {
+                  return (
+                    <div className="flex items-center pt-8">
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          id={field.name}
+                          name={field.name}
+                          type="checkbox"
+                          checked={field.state.value ?? false}
+                          onChange={(e) => field.handleChange(e.target.checked)}
+                          onBlur={field.handleBlur}
+                          className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Is Featured?</span>
+                      </label>
+                    </div>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="star_rating"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Star Rating">
+                      <select
+                        id={field.name}
+                        name={field.name}
+                        value={field.state.value ?? ""}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        className={styles.select}
+                      >
+                        <option value="">Select rating</option>
+                        <option value="1">1 Star</option>
+                        <option value="2">2 Star</option>
+                        <option value="3">3 Star</option>
+                        <option value="4">4 Star</option>
+                        <option value="5">5 Star</option>
+                      </select>
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="address"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <div className="col-span-full">
+                      <FormFieldWrapper field={field} apiErrors={apiErrors} label="Address">
+                        <AddressAutocomplete
+                          onBlur={field.handleBlur}
+                          onPlaceSelect={handlePlaceSelect(field)}
+                          className={styles.input}
+                          placeholder="Search and select address..."
+                        />
+                      </FormFieldWrapper>
+                    </div>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="latitude"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Latitude">
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        type="number"
+                        step="0.000001"
+                        value={field.state.value ?? ""}
+                        onChange={(e) => field.handleChange(parseFloat(e.target.value))}
+                        onBlur={field.handleBlur}
+                        className={styles.inputReadOnly}
+                        placeholder="0.000000"
+                        readOnly
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="longitude"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Longitude">
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        type="number"
+                        step="0.000001"
+                        value={field.state.value ?? ""}
+                        onChange={(e) => field.handleChange(parseFloat(e.target.value))}
+                        onBlur={field.handleBlur}
+                        className={styles.inputReadOnly}
+                        placeholder="0.000000"
+                        readOnly
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="country"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Country">
+                      <SearchableSelect
+                        options={managedCountryOptions}
+                        value={field.state.value ?? ""}
+                        onChange={handleCountryChange(field)}
+                        placeholder="Select One"
+                        className="w-full"
+                        onSearch={handleCountrySearch}
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="city"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="City">
+                      <SearchableSelect
+                        options={managedCityOptions}
+                        value={field.state.value ?? ""}
+                        onChange={handleCityChange(field)}
+                        placeholder="Select One"
+                        className="w-full"
+                        onSearch={handleCitySearch}
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="location"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Location">
+                      <SearchableSelect
+                        options={managedLocationOptions}
+                        value={field.state.value ?? ""}
+                        onChange={(v) => field.handleChange(v)}
+                        placeholder="Select One"
+                        className="w-full"
+                        onSearch={handleLocationSearch}
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="tax_name"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Tax Name">
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        value={field.state.value ?? ""}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        className={styles.input}
+                        placeholder="Tax name"
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="tax_percentage"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Tax Percentage">
+                      <div className="relative">
+                        <input
+                          id={field.name}
+                          name={field.name}
+                          type="number"
+                          step="0.01"
+                          value={field.state.value ?? ""}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          onBlur={field.handleBlur}
+                          className={`${styles.input} pr-8`}
+                          placeholder="0.00"
+                        />
+                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                          %
+                        </span>
+                      </div>
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="check_in_time"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Check In Time">
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        type="time"
+                        value={field.state.value ?? ""}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        className={styles.input}
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="checkout_time"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Checkout Time">
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        type="time"
+                        value={field.state.value ?? ""}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        className={styles.input}
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+            </div>
+          </div>
+
+          {/* ===================== Amenities ===================== */}
+          <FormSection title="Amenities">
+            <div className={`grid grid-cols-2 gap-4 md:grid-cols-4 ${styles.sectionCard}`}>
+              {amenities.length === 0 ? (
+                <p className="col-span-full text-sm text-gray-500">No active amenities found.</p>
+              ) : (
+                amenities.map((amenity) => (
+                  <form.Field
+                    key={amenity.value}
+                    name="amenities"
+                    mode="array"
+                    children={(field) => {
+                      const currentAmenities = field.state.value || [];
+                      const isChecked = currentAmenities.some(
+                        (a: any) => String(a.name) === String(amenity.value) && a.allow,
+                      );
+                      return (
+                        <label className={styles.checkboxLabel}>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              const newAmenities = [...currentAmenities];
+                              const index = newAmenities.findIndex((a: any) => String(a.name) === String(amenity.value));
+                              if (index > -1) {
+                                newAmenities[index] = { ...newAmenities[index], allow: checked };
+                              } else {
+                                newAmenities.push({ name: String(amenity.value), allow: checked });
+                              }
+                              field.handleChange(newAmenities);
+                            }}
+                            className={styles.checkbox}
+                          />
+                          <span className="text-sm font-medium text-gray-700">{amenity.label}</span>
+                        </label>
+                      );
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          </FormSection>
+
+          {/* ===================== Facilities ===================== */}
+          <FormSection title="Facilities">
+            <div className={`grid grid-cols-2 gap-4 md:grid-cols-4 ${styles.sectionCard}`}>
+              {facilities.length === 0 ? (
+                <p className="col-span-full text-sm text-gray-500">No active facilities found.</p>
+              ) : (
+                facilities.map((facility) => (
+                  <form.Field
+                    key={facility.value}
+                    name="facilities"
+                    mode="array"
+                    children={(field) => {
+                      const currentFacilities = field.state.value || [];
+                      const isChecked = currentFacilities.some(
+                        (a: any) => String(a.name) === String(facility.value) && a.allow,
+                      );
+                      return (
+                        <label className={styles.checkboxLabel}>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              const newFacilities = [...currentFacilities];
+                              const index = newFacilities.findIndex(
+                                (a: any) => String(a.name) === String(facility.value),
+                              );
+                              if (index > -1) {
+                                newFacilities[index] = { ...newFacilities[index], allow: checked };
+                              } else {
+                                newFacilities.push({ name: String(facility.value), allow: checked });
+                              }
+                              field.handleChange(newFacilities);
+                            }}
+                            className={styles.checkbox}
+                          />
+                          <span className="text-sm font-medium text-gray-700">{facility.label}</span>
+                        </label>
+                      );
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          </FormSection>
+
+          {/* ===================== Rooms ===================== */}
+          <FormSection title="Rooms">
+            <form.Field
+              name="rooms"
+              mode="array"
+              children={(field) => {
+                const rooms = field.state.value || [];
+                return (
+                  <div className="space-y-4">
+                    {rooms.map((_: any, i: number) => (
+                      <div
+                        key={i}
+                        className="relative flex flex-col items-end gap-4 rounded-xl border border-gray-200 bg-gray-50 p-6 md:flex-row"
+                      >
+                        <span className="absolute -left-3 -top-3 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-blue-100 font-bold text-blue-800 shadow-sm">
+                          {i + 1}
+                        </span>
+
+                        <form.Field
+                          name={`rooms[${i}].name`}
+                          children={(subField) => (
+                            <div className="w-full flex-1">
+                              <label className="mb-1 block text-sm font-semibold text-gray-700">Room Name</label>
+                              <input
+                                value={subField.state.value ?? ""}
+                                onChange={(e) => subField.handleChange(e.target.value)}
+                                onBlur={subField.handleBlur}
+                                className={`${styles.input} rounded-lg px-4 py-2.5 shadow-sm hover:shadow-md`}
+                                placeholder="e.g. Deluxe Suite"
+                              />
+                            </div>
+                          )}
+                        />
+
+                        <form.Field
+                          name={`rooms[${i}].type`}
+                          children={(subField) => (
+                            <div className="w-full flex-1">
+                              <label className="mb-1 block text-sm font-semibold text-gray-700">Bed Type</label>
+                              <select
+                                value={subField.state.value ?? ""}
+                                onChange={(e) => subField.handleChange(e.target.value)}
+                                onBlur={subField.handleBlur}
+                                className={`${styles.select} rounded-lg px-4 py-2.5 shadow-sm hover:shadow-md`}
+                              >
+                                <option value="">-- Select Bed Type --</option>
+                                {roomTypes.map((rt) => (
+                                  <option key={rt.value} value={rt.value}>
+                                    {rt.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => field.removeValue(i)}
+                          className="mt-2 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-100 focus:ring-2 focus:ring-red-500 md:mt-0 md:w-auto"
+                        >
+                          Remove Room
+                        </button>
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => field.pushValue({ name: "", type: "" })}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md active:scale-95 md:w-auto"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                          fillRule="evenodd"
+                          d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Add New Room
+                    </button>
+                  </div>
+                );
+              }}
+            />
+          </FormSection>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 

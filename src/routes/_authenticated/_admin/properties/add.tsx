@@ -13,6 +13,8 @@ import { getCitiesQuery, getCountriesQuery, getLocationsQuery } from '@/location
 import { fetchCities, fetchCountries, fetchLocations } from '@/services/location'
 import type { SearchParams } from '@/types/common'
 import { useDebounce } from '@/hooks/use-debounce'
+import { getAmenitiesQuery, getFacilitiesQuery, getBedTypesQuery } from '@/attributes/queries'
+import type { Amenity, BedType, Facility } from '@/types/attribute/index.'
 export const Route = createFileRoute('/_authenticated/_admin/properties/add')({
     head: () => ({
         title: "Add Property",
@@ -44,10 +46,23 @@ const propertyFormInitialValues = () : PropertyDTO => ({
     feature_image: '',
     cover_image: '',
     gallery_images: [],
+    food_options:[],
+    amenities:[],
+    facilities:[],
+    rooms:[],
+    trade_licence: '',
+    trade_licence_number: '',
+    listing_price: 0,
+    sale_price: 0,
+    is_featured: false,
 })
 function RouteComponent() {
     const [vendorOptions, setVendorOptions] = React.useState<{ value: string | number; label: string }[]>([])
     const [countryOptions, setCountryOptions] = React.useState<{ value: string | number; label: string }[]>([])
+    const[amenities, setAmenities] = React.useState<{ value: string | number; label: string }[]>([])
+    const[facilities, setFacilities] = React.useState<{ value: string | number; label: string }[]>([])
+    const[roomTypes, setRoomTypes] = React.useState<{ value: string | number; label: string }[]>([])
+
     const propertyForm = useForm({
         defaultValues: propertyFormInitialValues(),
     })
@@ -68,12 +83,56 @@ function RouteComponent() {
         staleTime: 1000 * 60 * 5,
         refetchOnWindowFocus: false,
     });
+    const amenityFilter = [
+        {
+            search_field: 'status',
+            search_value: true,
+        }
+    ]
+    const {data: AmenitiesData} = useQuery({
+        ...getAmenitiesQuery(1, 100, '', '', { filter: amenityFilter })(),
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+    });
+     const facilityFilter = [
+        {
+            search_field: 'status',
+            search_value: true,
+        }
+    ]
+    
+    const {data: FacilitiesData} = useQuery({
+        ...getFacilitiesQuery(1, 100, '', '', { filter: facilityFilter })(),
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+    });
+     const roomTypeFilter = [
+        {
+            search_field: 'status',
+            search_value: true,
+        }
+    ]
+    
+    const {data: RoomTypesData} = useQuery({
+        ...getBedTypesQuery(1, 100, '', '', { filter: roomTypeFilter })(),
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+    });
 
     React.useEffect(() => {
         if (queryData?.data) {
             setVendorOptions(queryData.data.map((vendor: UserData) => ({ value: vendor.id, label: vendor.first_name + ' ' + vendor.last_name })));
         }
-    }, [queryData]);
+        if (AmenitiesData?.data) {
+            setAmenities(AmenitiesData.data.map((amenity: Amenity) => ({ value: amenity.id, label: amenity.name })));
+        }
+        if (FacilitiesData?.data) {
+            setFacilities(FacilitiesData.data.map((facility: Facility) => ({ value: facility.id, label: facility.name })));
+        }
+        if (RoomTypesData?.data) {
+            setRoomTypes(RoomTypesData.data.map((roomType: BedType) => ({ value: roomType.id, label: roomType.name })));
+        }
+    }, [queryData,AmenitiesData,FacilitiesData,RoomTypesData]);
 
     React.useEffect(() => {
         let mounted = true;
@@ -110,7 +169,11 @@ function RouteComponent() {
             form={propertyForm}
             vendorOptions={vendorOptions}
             countryOptions={countryOptions}
+            amenities={amenities}
+            facilities={facilities}
+            roomTypes={roomTypes}
         />
      </React.Fragment>
   )
 }
+

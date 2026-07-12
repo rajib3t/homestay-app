@@ -12,6 +12,7 @@ import type { UserData } from '@/types/user';
 import { getCitiesQuery, getCountriesQuery, getLocationsQuery } from '@/locations/queries'
 import { fetchCities, fetchCountries, fetchLocations } from '@/services/location'
 import type { SearchParams } from '@/types/common'
+import { useDebounce } from '@/hooks/use-debounce'
 export const Route = createFileRoute('/_authenticated/_admin/properties/add')({
     head: () => ({
         title: "Add Property",
@@ -52,6 +53,10 @@ function RouteComponent() {
     const propertyForm = useForm({
         defaultValues: propertyFormInitialValues(),
     })
+    
+    // Debounce country and city values to prevent rapid API calls
+    const debouncedCountry = useDebounce(propertyForm.state.values.country, 500)
+    const debouncedCity = useDebounce(propertyForm.state.values.city, 500)
     const defaultFilter = [
         {
             search_field: "user_type",
@@ -93,13 +98,13 @@ function RouteComponent() {
     }, []);
 
     React.useEffect(() => {
-        let mounted = true;
-        const selectedCountry = propertyForm.state.values.country;
+        let abortController = new AbortController();
+        const selectedCountry = debouncedCountry;
 
         if (!selectedCountry) {
             setCityOptions([]);
             setLocationOptions([]);
-            return () => { mounted = false; };
+            return () => { abortController.abort(); };
         }
 
         (async () => {
@@ -107,26 +112,27 @@ function RouteComponent() {
                 const filterObj = { filter: [{ search_field: 'country', search_value: selectedCountry }] } as SearchParams;
                 const opts = getCitiesQuery(1, 100, '', '', filterObj)();
                 const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCities(1, 100, '', '', filterObj);
-                if (!mounted) return;
-                const items = res?.data ?? [];
-                setCityOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
+                if (!abortController.signal.aborted) {
+                    const items = res?.data ?? [];
+                    setCityOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
+                }
             } catch {
-                if (mounted) {
+                if (!abortController.signal.aborted) {
                     setCityOptions([]);
                 }
             }
         })();
 
-        return () => { mounted = false; };
-    }, [propertyForm.state.values.country]);
+        return () => { abortController.abort(); };
+    }, [debouncedCountry]);
 
     React.useEffect(() => {
-        let mounted = true;
-        const selectedCity = propertyForm.state.values.city;
+        let abortController = new AbortController();
+        const selectedCity = debouncedCity;
 
         if (!selectedCity) {
             setLocationOptions([]);
-            return () => { mounted = false; };
+            return () => { abortController.abort(); };
         }
 
         (async () => {
@@ -134,18 +140,19 @@ function RouteComponent() {
                 const filterObj = { filter: [{ search_field: 'city', search_value: selectedCity }] } as SearchParams;
                 const opts = getLocationsQuery(1, 100, '', '', filterObj)();
                 const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchLocations(1, 100, '', '', filterObj);
-                if (!mounted) return;
-                const items = res?.data ?? [];
-                setLocationOptions(items.map((location: any) => ({ value: location.id, label: location.name })));
+                if (!abortController.signal.aborted) {
+                    const items = res?.data ?? [];
+                    setLocationOptions(items.map((location: any) => ({ value: location.id, label: location.name })));
+                }
             } catch {
-                if (mounted) {
+                if (!abortController.signal.aborted) {
                     setLocationOptions([]);
                 }
             }
         })();
 
-        return () => { mounted = false; };
-    }, [propertyForm.state.values.city]);
+        return () => { abortController.abort(); };
+    }, [debouncedCity]);
 
     return (
      <React.Fragment>

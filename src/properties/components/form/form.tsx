@@ -13,6 +13,7 @@ import { fetchCities, fetchCountries, fetchLocations } from "@/services/location
 import { getVendorsQuery } from "@/vendors/queries";
 import { fetchUsers } from "@/services/user";
 import { env } from "@/lib/env";
+import { useDebounce } from "@/hooks/use-debounce";
 
 declare global {
   interface Window {
@@ -177,6 +178,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   const [managedCountryOptions, setManagedCountryOptions] = useState(countryOptions);
   const [managedCityOptions, setManagedCityOptions] = useState(cityOptions);
   const [managedLocationOptions, setManagedLocationOptions] = useState(locationOptions);
+  
+  // Debounce country and city values to prevent rapid API calls
+  const debouncedCountry = useDebounce(form.state.values.country, 500);
+  const debouncedCity = useDebounce(form.state.values.city, 500);
 
   useEffect(() => {
     setManagedCountryOptions(countryOptions);
@@ -190,42 +195,81 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
     setManagedLocationOptions(locationOptions);
   }, [locationOptions]);
 
-  const loadCitiesForCountry = async (selectedCountry: string | number) => {
-    if (!selectedCountry) {
+  // Debounced effect for loading cities when country changes
+  useEffect(() => {
+    let abortController = new AbortController();
+    
+    const loadCitiesForCountryWithAbort = async (selectedCountry: string | number) => {
+      if (!selectedCountry) {
+        setManagedCityOptions([]);
+        setManagedLocationOptions([]);
+        return;
+      }
+
+      try {
+        const filterObj = { filter: [{ search_field: 'country', search_value: selectedCountry }] } as SearchParams;
+        const opts = getCitiesQuery(1, 100, undefined, undefined, filterObj)();
+        const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCities(1, 100, undefined, undefined, filterObj);
+        if (!abortController.signal.aborted) {
+          const items = res?.data ?? [];
+          setManagedCityOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
+          setManagedLocationOptions([]);
+        }
+      } catch {
+        if (!abortController.signal.aborted) {
+          setManagedCityOptions([]);
+          setManagedLocationOptions([]);
+        }
+      }
+    };
+
+    if (debouncedCountry) {
+      loadCitiesForCountryWithAbort(debouncedCountry);
+    } else {
       setManagedCityOptions([]);
       setManagedLocationOptions([]);
-      return;
     }
 
-    try {
-      const filterObj = { filter: [{ search_field: 'country', search_value: selectedCountry }] } as SearchParams;
-      const opts = getCitiesQuery(1, 100, undefined, undefined, filterObj)();
-      const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCities(1, 100, undefined, undefined, filterObj);
-      const items = res?.data ?? [];
-      setManagedCityOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
-      setManagedLocationOptions([]);
-    } catch {
-      setManagedCityOptions([]);
-      setManagedLocationOptions([]);
-    }
-  };
+    return () => {
+      abortController.abort();
+    };
+  }, [debouncedCountry]);
 
-  const loadLocationsForCity = async (selectedCity: string | number) => {
-    if (!selectedCity) {
+  // Debounced effect for loading locations when city changes
+  useEffect(() => {
+    let abortController = new AbortController();
+    
+    const loadLocationsForCityWithAbort = async (selectedCity: string | number) => {
+      if (!selectedCity) {
+        setManagedLocationOptions([]);
+        return;
+      }
+
+      try {
+        const filterObj = { filter: [{ search_field: 'city', search_value: selectedCity }] } as SearchParams;
+        const opts = getLocationsQuery(1, 100, undefined, undefined, filterObj)();
+        const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchLocations(1, 100, undefined, undefined, filterObj);
+        if (!abortController.signal.aborted) {
+          const items = res?.data ?? [];
+          setManagedLocationOptions(items.map((location: any) => ({ value: location.id, label: location.name })));
+        }
+      } catch {
+        if (!abortController.signal.aborted) {
+          setManagedLocationOptions([]);
+        }
+      }
+    };
+
+    if (debouncedCity) {
+      loadLocationsForCityWithAbort(debouncedCity);
+    } else {
       setManagedLocationOptions([]);
-      return;
     }
 
-    try {
-      const filterObj = { filter: [{ search_field: 'city', search_value: selectedCity }] } as SearchParams;
-      const opts = getLocationsQuery(1, 100, undefined, undefined, filterObj)();
-      const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchLocations(1, 100, undefined, undefined, filterObj);
-      const items = res?.data ?? [];
-      setManagedLocationOptions(items.map((location: any) => ({ value: location.id, label: location.name })));
-    } catch {
-      setManagedLocationOptions([]);
-    }
-  };
+    return () => {
+      abortController.abort();
+    };
+  }, [debouncedCity]);
 
   return (
     <React.Fragment>
@@ -445,11 +489,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                         <SearchableSelect
                           options={managedCountryOptions}
                           value={field.state.value ?? ""}
-                          onChange={async (v) => {
+                          onChange={(v) => {
                             field.handleChange(v);
                             form.setFieldValue("city", "");
                             form.setFieldValue("location", "");
-                            await loadCitiesForCountry(v);
                           }}
                           placeholder="Select One"
                           className="w-full"
@@ -488,10 +531,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                         <SearchableSelect
                           options={managedCityOptions}
                           value={field.state.value ?? ""}
-                          onChange={async (v) => {
+                          onChange={(v) => {
                             field.handleChange(v);
                             form.setFieldValue("location", "");
-                            await loadLocationsForCity(v);
                           }}
                           placeholder="Select One"
                           className="w-full"

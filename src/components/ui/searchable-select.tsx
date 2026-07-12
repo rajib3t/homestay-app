@@ -33,15 +33,22 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ id, name, options =
         setFiltered(options);
         return;
       }
+      // Only search if query has at least 2 characters
+      if (q.length < 2) {
+        setFiltered(options);
+        return;
+      }
       let mounted = true;
+      let timerId: NodeJS.Timeout;
       const timer = setTimeout(() => {
         onSearch(query).then(res => {
           if (mounted) setFiltered(res);
         }).catch(() => {
           if (mounted) setFiltered([]);
         });
-      }, 300);
-      return () => { mounted = false; clearTimeout(timer); };
+      }, 1000);
+      timerId = timer;
+      return () => { mounted = false; clearTimeout(timerId); };
     }
 
     const q = query.trim().toLowerCase();

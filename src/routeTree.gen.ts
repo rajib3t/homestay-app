@@ -15,6 +15,7 @@ import { Route as AuthenticatedUnauthorizedRouteImport } from './routes/_authent
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/_admin'
+import { Route as publicComingSoonRouteImport } from './routes/(public)/coming-soon'
 import { Route as publicLayoutRouteImport } from './routes/(public)/_layout'
 import { Route as authLayoutRouteImport } from './routes/(auth)/_layout'
 import { Route as publicLayoutIndexRouteImport } from './routes/(public)/_layout/index'
@@ -60,6 +61,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/_admin',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const publicComingSoonRoute = publicComingSoonRouteImport.update({
+  id: '/(public)/coming-soon',
+  path: '/coming-soon',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const publicLayoutRoute = publicLayoutRouteImport.update({
   id: '/(public)/_layout',
@@ -154,6 +160,7 @@ const AuthenticatedAdminVendorsVendorIDEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof publicLayoutIndexRoute
   '/test-head': typeof TestHeadRoute
+  '/coming-soon': typeof publicComingSoonRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof publicLayoutIndexRoute
   '/test-head': typeof TestHeadRoute
+  '/coming-soon': typeof publicComingSoonRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/test-head': typeof TestHeadRoute
   '/(auth)/_layout': typeof authLayoutRouteWithChildren
   '/(public)/_layout': typeof publicLayoutRouteWithChildren
+  '/(public)/coming-soon': typeof publicComingSoonRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/test-head'
+    | '/coming-soon'
     | '/dashboard'
     | '/profile'
     | '/unauthorized'
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/test-head'
+    | '/coming-soon'
     | '/dashboard'
     | '/profile'
     | '/unauthorized'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/test-head'
     | '/(auth)/_layout'
     | '/(public)/_layout'
+    | '/(public)/coming-soon'
     | '/_authenticated/_admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/profile'
@@ -288,6 +300,7 @@ export interface RootRouteChildren {
   TestHeadRoute: typeof TestHeadRoute
   authLayoutRoute: typeof authLayoutRouteWithChildren
   publicLayoutRoute: typeof publicLayoutRouteWithChildren
+  publicComingSoonRoute: typeof publicComingSoonRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -333,6 +346,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/(public)/coming-soon': {
+      id: '/(public)/coming-soon'
+      path: '/coming-soon'
+      fullPath: '/coming-soon'
+      preLoaderRoute: typeof publicComingSoonRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/(public)/_layout': {
       id: '/(public)/_layout'
@@ -531,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   TestHeadRoute: TestHeadRoute,
   authLayoutRoute: authLayoutRouteWithChildren,
   publicLayoutRoute: publicLayoutRouteWithChildren,
+  publicComingSoonRoute: publicComingSoonRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

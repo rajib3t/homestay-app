@@ -1,6 +1,5 @@
 import React from "react";
 import { Button } from "../ui/button";
-import { Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 interface AdminHeaderProps {
@@ -11,6 +10,7 @@ interface AdminHeaderProps {
     addLabel?: string;
     addUrl ?: string
     setOpenAddModal?: (open: boolean) => void;
+    icon?: React.ReactNode;
 }
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({ 
@@ -20,7 +20,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
     addLabel = 'Add New',
     addButtonType = 'button',
     addUrl = '#',
-    setOpenAddModal
+    setOpenAddModal,
+    icon
 }) => {
     return (
         <React.Fragment>
@@ -44,19 +45,20 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
                             className="gap-2 shadow-sm cursor-pointer"
                             onClick={() => setOpenAddModal?.(true)}
                         >
-                            <Plus className="w-4 h-4" />
+                            {icon && <span className="mr-2">{icon}</span>}
+                            
                             {addLabel}
                         </Button>
                         )}
                         {addButtonType === 'link' && (
-                            <Link
-                            className="gap-2 shadow-sm cursor-pointer"
-                            to={addUrl}
-                        >
-                            <Plus className="w-4 h-4" />
-                            {addLabel}
-                        </Link>
-                        )}
+    <Link
+        className="inline-flex items-center justify-center gap-2 shadow-sm cursor-pointer rounded-md text-sm font-medium h-9 px-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        to={addUrl}
+    >
+        {icon && <span className="mr-2">{icon}</span>}
+        {addLabel}
+    </Link>
+)}
                         </React.Fragment>
                     )}
                 </div>

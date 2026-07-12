@@ -28,6 +28,11 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ id, name, options =
 
   React.useEffect(() => {
     if (onSearch) {
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        setFiltered(options);
+        return;
+      }
       let mounted = true;
       const timer = setTimeout(() => {
         onSearch(query).then(res => {

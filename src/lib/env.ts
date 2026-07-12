@@ -15,6 +15,7 @@ export interface EnvConfig {
   VITE_SUBTITLE_BASE_URL?: string
   GOOGLE_CLIENT_ID?: string
   GOOGLE_CLIENT_SECRET?: string
+  GOOGLE_MAPS_API_KEY?: string
 }
 
 class Environment {
@@ -49,6 +50,7 @@ class Environment {
       VITE_SUBTITLE_BASE_URL: import.meta.env.VITE_SUBTITLE_BASE_URL || '',
       GOOGLE_CLIENT_ID: import.meta.env.GOOGLE_CLIENT_ID,
       GOOGLE_CLIENT_SECRET: import.meta.env.GOOGLE_CLIENT_SECRET,
+      GOOGLE_MAPS_API_KEY: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
     }
   }
 

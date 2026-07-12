@@ -2,19 +2,28 @@ import AdminHeader from "@/components/common/admin-header";
 import React from "react";
 
 interface PropertiesHeaderProps {
-    setOpenNewPropertyModal: (open: boolean) => void;
+    title: string;
+    description: string;
+    addButton: boolean;
+    addLabel: string;
+    setOpenAddModal: (open: boolean) => void;
+    addButtonType: 'button' | 'link';
+    addUrl: string;
+    icon?: React.ReactNode;
 }
 
-const PropertiesHeader: React.FC<PropertiesHeaderProps> = ({  }) => {
+const PropertiesHeader: React.FC<PropertiesHeaderProps> = ({ title, description, addButton, addLabel, setOpenAddModal, addButtonType, addUrl, icon   }) => {
     return (
         <React.Fragment>
             <AdminHeader
-                title="Properties"
-                description="Manage the properties available for homestays."
-                addLabel="Add Property"
-                addButton={true}
-                setOpenAddModal={() => {}}
-                
+                title={title}
+                description={description}
+                addLabel={addLabel}
+                addButton={addButton}
+                setOpenAddModal={setOpenAddModal}
+                addButtonType={addButtonType}
+                addUrl={addUrl}
+                icon={icon}
             />
            
         </React.Fragment>

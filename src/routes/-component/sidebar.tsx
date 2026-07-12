@@ -29,7 +29,6 @@ import {
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { env } from '@/lib/env'
 import { useAtomValue } from 'jotai'
 import { appLogo, appName } from '@/store/setting'
 
@@ -82,7 +81,7 @@ const menuItems: Array<{
 ]
 
 const settingsItems = [
-  { title: 'Settings', icon: Settings, url: '/settings' },
+  { title: 'Settings', icon: Settings, url: '/app-setting' },
   { title: 'Profile', icon: User, url: '/profile' },
 ]
 

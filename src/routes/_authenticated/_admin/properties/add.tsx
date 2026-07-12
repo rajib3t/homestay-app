@@ -1,8 +1,17 @@
 import React from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import AdminHeader from '@/components/common/admin-header'
+import PropertiesHeader from '@/properties/components/header'
+import { List } from 'lucide-react'
 
-
+import { useForm } from '@tanstack/react-form'
+import PropertyForm from '@/properties/components/form/form'
+import type { PropertyDTO } from '@/types/property'
+import { getVendorsQuery } from '@/vendors/queries';
+import { useQuery } from '@tanstack/react-query';
+import type { UserData } from '@/types/user';
+import { getCitiesQuery, getCountriesQuery, getLocationsQuery } from '@/locations/queries'
+import { fetchCities, fetchCountries, fetchLocations } from '@/services/location'
+import type { SearchParams } from '@/types/common'
 export const Route = createFileRoute('/_authenticated/_admin/properties/add')({
     head: () => ({
         title: "Add Property",
@@ -20,18 +29,145 @@ export const Route = createFileRoute('/_authenticated/_admin/properties/add')({
     }),
   component: RouteComponent,
 })
-
+const propertyFormInitialValues = () : PropertyDTO => ({
+    vendor: '',
+    name: '',
+    description: '',
+    country: '',
+    city: '',
+    location: '',
+    address: '',
+    latitude: 0,
+    longitude: 0,
+    is_published: false,
+    feature_image: '',
+    cover_image: '',
+    gallery_images: [],
+})
 function RouteComponent() {
-  return (
+    const [vendorOptions, setVendorOptions] = React.useState<{ value: string | number; label: string }[]>([])
+    const [countryOptions, setCountryOptions] = React.useState<{ value: string | number; label: string }[]>([])
+    const [cityOptions, setCityOptions] = React.useState<{ value: string | number; label: string }[]>([])
+    const [locationOptions, setLocationOptions] = React.useState<{ value: string | number; label: string }[]>([])
+    const propertyForm = useForm({
+        defaultValues: propertyFormInitialValues(),
+    })
+    const defaultFilter = [
+        {
+            search_field: "user_type",
+            search_value: "vendor",
+        },
+    ];
+
+    const page = 1;
+    const limit = 5;
+    const sort = "created_at";
+    const sort_order = "desc";
+    const { data: queryData } = useQuery({
+        ...getVendorsQuery(page, limit, sort, sort_order, { filter: defaultFilter })(),
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+    });
+
+    React.useEffect(() => {
+        if (queryData?.data) {
+            setVendorOptions(queryData.data.map((vendor: UserData) => ({ value: vendor.id, label: vendor.first_name + ' ' + vendor.last_name })));
+        }
+    }, [queryData]);
+
+    React.useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const filterObj = { filter: [{ search_field: 'status', search_value: true }] } as SearchParams;
+                const opts = getCountriesQuery(1, 100, '', '', filterObj)();
+                const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCountries(1, 100, '', '', filterObj);
+                if (!mounted) return;
+                const items = res?.data ?? [];
+                setCountryOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
+            } catch {
+                // ignore
+            }
+        })();
+        return () => { mounted = false; };
+    }, []);
+
+    React.useEffect(() => {
+        let mounted = true;
+        const selectedCountry = propertyForm.state.values.country;
+
+        if (!selectedCountry) {
+            setCityOptions([]);
+            setLocationOptions([]);
+            return () => { mounted = false; };
+        }
+
+        (async () => {
+            try {
+                const filterObj = { filter: [{ search_field: 'country', search_value: selectedCountry }] } as SearchParams;
+                const opts = getCitiesQuery(1, 100, '', '', filterObj)();
+                const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCities(1, 100, '', '', filterObj);
+                if (!mounted) return;
+                const items = res?.data ?? [];
+                setCityOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
+            } catch {
+                if (mounted) {
+                    setCityOptions([]);
+                }
+            }
+        })();
+
+        return () => { mounted = false; };
+    }, [propertyForm.state.values.country]);
+
+    React.useEffect(() => {
+        let mounted = true;
+        const selectedCity = propertyForm.state.values.city;
+
+        if (!selectedCity) {
+            setLocationOptions([]);
+            return () => { mounted = false; };
+        }
+
+        (async () => {
+            try {
+                const filterObj = { filter: [{ search_field: 'city', search_value: selectedCity }] } as SearchParams;
+                const opts = getLocationsQuery(1, 100, '', '', filterObj)();
+                const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchLocations(1, 100, '', '', filterObj);
+                if (!mounted) return;
+                const items = res?.data ?? [];
+                setLocationOptions(items.map((location: any) => ({ value: location.id, label: location.name })));
+            } catch {
+                if (mounted) {
+                    setLocationOptions([]);
+                }
+            }
+        })();
+
+        return () => { mounted = false; };
+    }, [propertyForm.state.values.city]);
+
+    return (
      <React.Fragment>
-      <AdminHeader
-                title="Add Property"
-                description="Add a new property to the system."
-                
-               addButton={false}
-                setOpenAddModal={() => {}}
-                
+      <PropertiesHeader
+            title="Add Property"
+            description="Add a new property to the system."
+            addLabel="List Property"
+            setOpenAddModal={() => {}}
+            addButton={true}
+            addButtonType="link"
+            addUrl="/properties"
+            icon= <List className="w-4 h-4" />
             />
+            
+
+        <PropertyForm
+            form={propertyForm}
+            vendorOptions={vendorOptions}
+            countryOptions={countryOptions}
+            cityOptions={cityOptions}
+            locationOptions={locationOptions}
+        />
      </React.Fragment>
   )
 }

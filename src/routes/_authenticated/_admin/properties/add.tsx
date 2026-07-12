@@ -62,6 +62,7 @@ function RouteComponent() {
     const[amenities, setAmenities] = React.useState<{ value: string | number; label: string }[]>([])
     const[facilities, setFacilities] = React.useState<{ value: string | number; label: string }[]>([])
     const[roomTypes, setRoomTypes] = React.useState<{ value: string | number; label: string }[]>([])
+    const[foodOptions, setFoodOptions] = React.useState<{ value: string | number; label: string }[]>([])
 
     const propertyForm = useForm({
         defaultValues: propertyFormInitialValues(),
@@ -112,7 +113,7 @@ function RouteComponent() {
             search_value: true,
         }
     ]
-    
+
     const {data: RoomTypesData} = useQuery({
         ...getBedTypesQuery(1, 100, '', '', { filter: roomTypeFilter })(),
         staleTime: 1000 * 60 * 5,
@@ -132,6 +133,13 @@ function RouteComponent() {
         if (RoomTypesData?.data) {
             setRoomTypes(RoomTypesData.data.map((roomType: BedType) => ({ value: roomType.id, label: roomType.name })));
         }
+        // Static food options
+        setFoodOptions([
+            { value: 'breakfast', label: 'Breakfast' },
+            { value: 'lunch', label: 'Lunch' },
+            { value: 'evening_snacks', label: 'Evening Snacks' },
+            { value: 'dinner', label: 'Dinner' },
+        ]);
     }, [queryData,AmenitiesData,FacilitiesData,RoomTypesData]);
 
     React.useEffect(() => {
@@ -172,6 +180,7 @@ function RouteComponent() {
             amenities={amenities}
             facilities={facilities}
             roomTypes={roomTypes}
+            foodOptions={foodOptions}
         />
      </React.Fragment>
   )

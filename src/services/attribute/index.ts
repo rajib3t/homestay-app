@@ -1,5 +1,5 @@
 import { protectedApi } from "@/lib/api";
-import type { Amenity, CreateAmenityDTO, FacilityDTO, UpdateAmenityDTO, Facility, BedTypeDTO, BedType } from "@/types/attribute/index.";
+import type { Amenity, CreateAmenityDTO, FacilityDTO, UpdateAmenityDTO, Facility, BedTypeDTO, BedType, FoodOption } from "@/types/attribute/index.";
 import type { ApiResponse } from "@/types/common";
 
 
@@ -158,3 +158,34 @@ export const updateBedType = (id: string, payload: BedTypeDTO) => {
 export const statusChangeBedType = (id: string, status: boolean) => {
   return protectedApi.patch<ApiResponse<BedType>>(`/attributes/room-type/${id}/status`, { status });
 }
+
+export const fetchFoodOptions = async (
+  page: number,
+  limit: number,
+  sort?: string,
+  sort_order?: string,
+  filter?: SearchParams
+) => {
+  let queryParams = `?page=${page}&size=${limit}`;
+
+  if (sort) {
+    queryParams += `&sort=${encodeURIComponent(sort)}`;
+  }
+
+  if (sort_order) {
+    queryParams += `&sort_order=${encodeURIComponent(sort_order)}`;
+  }
+  
+  if (filter?.filter && filter.filter.length > 0) {
+    filter.filter.forEach((item) => {
+      if (!item?.search_field || !item?.search_value) return;
+      queryParams += `&${encodeURIComponent(item.search_field)}=${encodeURIComponent(item.search_value)}`;
+    });
+  }
+
+  const url = `/attributes/food-options${queryParams}`;
+
+  const response = await protectedApi.get<ApiResponse<FoodOption[]>>(url);
+
+  return response.data as ApiResponse<FoodOption[]>;
+};

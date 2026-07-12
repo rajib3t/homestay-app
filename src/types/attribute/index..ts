@@ -40,3 +40,13 @@ export interface BedTypeDTO {
     name: string;
     capacity: number | null;
 }
+
+export interface FoodOption {
+    id: string;
+    name: string;
+    status: boolean;
+}
+
+export interface FoodOptionDTO {
+    name: string;
+}

@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query"
 import type { SearchParams } from "@/types/common"
-import { fetchAmenities, fetchBedTypes, fetchFacilities } from "@/services/attribute"
+import { fetchAmenities, fetchBedTypes, fetchFacilities, fetchFoodOptions } from "@/services/attribute"
 
 
 export const getAmenitiesQuery = (page: number, limit: number, sort?: string, sort_order?: string, filter?: SearchParams) => () =>
@@ -21,4 +21,10 @@ export const getBedTypesQuery = (page: number, limit: number, sort?: string, sor
    queryOptions({
       queryKey: ["GET_BED_TYPES", page, limit, sort, sort_order, filter],
       queryFn: () => fetchBedTypes(page, limit, sort, sort_order, filter),
+   })
+
+export const getFoodOptionsQuery = (page: number, limit: number, sort?: string, sort_order?: string, filter?: SearchParams) => () =>
+   queryOptions({
+      queryKey: ["GET_FOOD_OPTIONS", page, limit, sort, sort_order, filter],
+      queryFn: () => fetchFoodOptions(page, limit, sort, sort_order, filter),
    })

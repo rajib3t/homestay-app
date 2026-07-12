@@ -29,6 +29,7 @@ interface PropertyFormProps {
   amenities?: { value: string | number; label: string }[];
   facilities?: { value: string | number; label: string }[];
   roomTypes?: { value: string | number; label: string }[];
+  foodOptions?: { value: string | number; label: string }[];
 }
 
 const GOOGLE_MAPS_API_KEY = env.get("GOOGLE_MAPS_API_KEY") as string;
@@ -202,6 +203,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   amenities = [],
   facilities = [],
   roomTypes = [],
+  foodOptions = [],
 }) => {
   const [mainLogo, setMainLogo] = useState<string | null>(null);
   const [coverLogo, setCoverLogo] = useState<string | null>(null);
@@ -1083,6 +1085,52 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                             className={styles.checkbox}
                           />
                           <span className="text-sm font-medium text-gray-700">{facility.label}</span>
+                        </label>
+                      );
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          </FormSection>
+
+          {/* ===================== Food Options ===================== */}
+          <FormSection title="Food Options">
+            <div className={`grid grid-cols-2 gap-4 md:grid-cols-4 ${styles.sectionCard}`}>
+              {foodOptions.length === 0 ? (
+                <p className="col-span-full text-sm text-gray-500">No active food options found.</p>
+              ) : (
+                foodOptions.map((foodOption) => (
+                  <form.Field
+                    key={foodOption.value}
+                    name="food_options"
+                    mode="array"
+                    children={(field) => {
+                      const currentFoodOptions = field.state.value || [];
+                      const isChecked = currentFoodOptions.some(
+                        (a: any) => String(a.name) === String(foodOption.value) && a.allow,
+                      );
+                      return (
+                        <label className={styles.checkboxLabel}>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              const newFoodOptions = [...currentFoodOptions];
+                              const index = newFoodOptions.findIndex(
+                                (a: any) => String(a.name) === String(foodOption.value),
+                              );
+                              if (index > -1) {
+                                newFoodOptions[index] = { ...newFoodOptions[index], allow: checked };
+                              } else {
+                                newFoodOptions.push({ name: String(foodOption.value), allow: checked });
+                              }
+                              field.handleChange(newFoodOptions);
+                            }}
+                            className={styles.checkbox}
+                          />
+                          <span className="text-sm font-medium text-gray-700">{foodOption.label}</span>
                         </label>
                       );
                     }}

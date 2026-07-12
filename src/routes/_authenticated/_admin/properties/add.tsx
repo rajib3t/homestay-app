@@ -48,15 +48,10 @@ const propertyFormInitialValues = () : PropertyDTO => ({
 function RouteComponent() {
     const [vendorOptions, setVendorOptions] = React.useState<{ value: string | number; label: string }[]>([])
     const [countryOptions, setCountryOptions] = React.useState<{ value: string | number; label: string }[]>([])
-    const [cityOptions, setCityOptions] = React.useState<{ value: string | number; label: string }[]>([])
-    const [locationOptions, setLocationOptions] = React.useState<{ value: string | number; label: string }[]>([])
     const propertyForm = useForm({
         defaultValues: propertyFormInitialValues(),
     })
     
-    // Debounce country and city values to prevent rapid API calls
-    const debouncedCountry = useDebounce(propertyForm.state.values.country, 500)
-    const debouncedCity = useDebounce(propertyForm.state.values.city, 500)
     const defaultFilter = [
         {
             search_field: "user_type",
@@ -97,63 +92,6 @@ function RouteComponent() {
         return () => { mounted = false; };
     }, []);
 
-    React.useEffect(() => {
-        let abortController = new AbortController();
-        const selectedCountry = debouncedCountry;
-
-        if (!selectedCountry) {
-            setCityOptions([]);
-            setLocationOptions([]);
-            return () => { abortController.abort(); };
-        }
-
-        (async () => {
-            try {
-                const filterObj = { filter: [{ search_field: 'country', search_value: selectedCountry }] } as SearchParams;
-                const opts = getCitiesQuery(1, 100, '', '', filterObj)();
-                const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCities(1, 100, '', '', filterObj);
-                if (!abortController.signal.aborted) {
-                    const items = res?.data ?? [];
-                    setCityOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
-                }
-            } catch {
-                if (!abortController.signal.aborted) {
-                    setCityOptions([]);
-                }
-            }
-        })();
-
-        return () => { abortController.abort(); };
-    }, [debouncedCountry]);
-
-    React.useEffect(() => {
-        let abortController = new AbortController();
-        const selectedCity = debouncedCity;
-
-        if (!selectedCity) {
-            setLocationOptions([]);
-            return () => { abortController.abort(); };
-        }
-
-        (async () => {
-            try {
-                const filterObj = { filter: [{ search_field: 'city', search_value: selectedCity }] } as SearchParams;
-                const opts = getLocationsQuery(1, 100, '', '', filterObj)();
-                const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchLocations(1, 100, '', '', filterObj);
-                if (!abortController.signal.aborted) {
-                    const items = res?.data ?? [];
-                    setLocationOptions(items.map((location: any) => ({ value: location.id, label: location.name })));
-                }
-            } catch {
-                if (!abortController.signal.aborted) {
-                    setLocationOptions([]);
-                }
-            }
-        })();
-
-        return () => { abortController.abort(); };
-    }, [debouncedCity]);
-
     return (
      <React.Fragment>
       <PropertiesHeader
@@ -172,8 +110,6 @@ function RouteComponent() {
             form={propertyForm}
             vendorOptions={vendorOptions}
             countryOptions={countryOptions}
-            cityOptions={cityOptions}
-            locationOptions={locationOptions}
         />
      </React.Fragment>
   )

@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 
 import type { ReactFormExtendedApi } from "@tanstack/react-form";
 import type { PropertyDTO } from "@/types/property";
 import type { SearchParams } from "@/types/common";
 import { Card, CardContent } from "@/components/ui/card";
-import { type AnyFieldApi } from "@tanstack/react-form";
+import { type AnyFieldApi, useStore } from "@tanstack/react-form";
 import { FormFieldWrapper } from "@/components/form-field-wrapper";
 import UploadImage from "@/components/upload-image";
 import SearchableSelect from "@/components/ui/searchable-select";
@@ -26,11 +26,7 @@ interface PropertyFormProps {
   validationErrors?: Record<string, string[]>;
   vendorOptions?: { value: string | number; label: string }[];
   countryOptions?: { value: string | number; label: string }[];
-  cityOptions?: { value: string | number; label: string }[];
-  locationOptions?: { value: string | number; label: string }[];
 }
-
-
 
 const GOOGLE_MAPS_API_KEY = env.get("GOOGLE_MAPS_API_KEY") as string;
 
@@ -135,7 +131,9 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
       });
 
       ac.addListener("place_changed", () => {
+
         const place = ac.getPlace();
+        console.log(place);
         const lat = place.geometry?.location?.lat();
         const lng = place.geometry?.location?.lng();
         const address = place.formatted_address ?? fallbackRef.current?.value ?? "";
@@ -171,34 +169,27 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   validationErrors,
   vendorOptions = [],
   countryOptions = [],
-  cityOptions = [],
-  locationOptions = [],
 }) => {
   const [mainLogo, setMainLogo] = useState<string | null>(null);
   const [managedCountryOptions, setManagedCountryOptions] = useState(countryOptions);
-  const [managedCityOptions, setManagedCityOptions] = useState(cityOptions);
-  const [managedLocationOptions, setManagedLocationOptions] = useState(locationOptions);
-  
+  const [managedCityOptions, setManagedCityOptions] = useState<{ value: string | number; label: string }[]>([]);
+  const [managedLocationOptions, setManagedLocationOptions] = useState<{ value: string | number; label: string }[]>([]);
+
+  const currentCountry = useStore(form.store, (state) => state.values.country);
+  const currentCity = useStore(form.store, (state) => state.values.city);
+
   // Debounce country and city values to prevent rapid API calls
-  const debouncedCountry = useDebounce(form.state.values.country, 500);
-  const debouncedCity = useDebounce(form.state.values.city, 500);
+  const debouncedCountry = useDebounce(currentCountry, 500);
+  const debouncedCity = useDebounce(currentCity, 500);
 
   useEffect(() => {
     setManagedCountryOptions(countryOptions);
   }, [countryOptions]);
 
-  useEffect(() => {
-    setManagedCityOptions(cityOptions);
-  }, [cityOptions]);
-
-  useEffect(() => {
-    setManagedLocationOptions(locationOptions);
-  }, [locationOptions]);
-
   // Debounced effect for loading cities when country changes
   useEffect(() => {
-    let abortController = new AbortController();
-    
+    const abortController = new AbortController();
+
     const loadCitiesForCountryWithAbort = async (selectedCountry: string | number) => {
       if (!selectedCountry) {
         setManagedCityOptions([]);
@@ -237,8 +228,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
   // Debounced effect for loading locations when city changes
   useEffect(() => {
-    let abortController = new AbortController();
-    
+    const abortController = new AbortController();
+
     const loadLocationsForCityWithAbort = async (selectedCity: string | number) => {
       if (!selectedCity) {
         setManagedLocationOptions([]);
@@ -270,6 +261,147 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
       abortController.abort();
     };
   }, [debouncedCity]);
+
+  // --- Memoized search handlers ---
+  // These are passed as `onSearch` props to SearchableSelect. Defining them
+  // inline in JSX creates a new function reference on every render, which
+  // can trigger effects inside SearchableSelect that depend on `onSearch`
+  // identity, causing a render -> fetch -> setState -> render loop.
+  // useCallback keeps the reference stable across renders.
+
+  const handleVendorSearch = useCallback(async (q: string) => {
+    try {
+      let filterObj: SearchParams | undefined;
+      if (q) {
+        const parts = q.trim().split(' ');
+        if (parts.length > 1) {
+          filterObj = {
+            filter: [
+              { search_field: 'first_name', search_value: parts[0] },
+              { search_field: 'last_name', search_value: parts[1] },
+              { search_field: 'user_type', search_value: 'vendor' },
+            ],
+          };
+        } else {
+          filterObj = {
+            filter: [
+              { search_field: 'first_name', search_value: q },
+              { search_field: 'user_type', search_value: 'vendor' },
+            ],
+          };
+        }
+      } else {
+        filterObj = { filter: [{ search_field: 'user_type', search_value: 'vendor' }] };
+      }
+      const opts = getVendorsQuery(1, 5, undefined, undefined, filterObj)();
+      const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchUsers(1, 5, undefined, undefined, filterObj);
+      const items = res?.data ?? [];
+      return items.map((c: any) => ({ value: c.id, label: c.first_name + ' ' + c.last_name }));
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const handleCountrySearch = useCallback(async (q: string) => {
+    try {
+      let filterObj: SearchParams | undefined;
+      if (q) {
+        filterObj = { filter: [{ search_field: 'name', search_value: q }, { search_field: 'status', search_value: true }] };
+      } else {
+        filterObj = { filter: [{ search_field: 'status', search_value: true }] };
+      }
+
+      const opts = getCountriesQuery(1, 100, undefined, undefined, filterObj)();
+      const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCountries(1, 100, undefined, undefined, filterObj);
+      const items = res?.data ?? [];
+      setManagedCountryOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
+      return items.map((c: any) => ({ value: c.id, label: c.name }));
+    } catch {
+      setManagedCountryOptions([]);
+      return [];
+    }
+  }, []);
+
+  const handleCitySearch = useCallback(async (q: string) => {
+    const countryFilterValue = form.state.values.country;
+    if (!countryFilterValue) {
+      return [];
+    }
+
+    // Options for the currently selected country were already loaded by the
+    // debounced country effect above; avoid re-fetching identical data when
+    // the dropdown opens with an empty query.
+    if (!q) {
+      return managedCityOptions;
+    }
+
+    try {
+      const filterObj: SearchParams = {
+        filter: [
+          { search_field: 'name', search_value: q },
+          { search_field: 'country', search_value: countryFilterValue },
+        ],
+      };
+
+      const opts = getCitiesQuery(1, 100, undefined, undefined, filterObj)();
+      const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCities(1, 100, undefined, undefined, filterObj);
+      const items = res?.data ?? [];
+      setManagedCityOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
+      return items.map((c: any) => ({ value: c.id, label: c.name }));
+    } catch {
+      setManagedCityOptions([]);
+      return [];
+    }
+  }, [form, managedCityOptions]);
+
+  const handleLocationSearch = useCallback(async (q: string) => {
+    const cityFilterValue = form.state.values.city;
+    if (!cityFilterValue) {
+      return [];
+    }
+
+    // Options for the currently selected city were already loaded by the
+    // debounced city effect above; avoid re-fetching identical data when
+    // the dropdown opens with an empty query.
+    if (!q) {
+      return managedLocationOptions;
+    }
+
+    try {
+      const filterObj: SearchParams = {
+        filter: [
+          { search_field: 'name', search_value: q },
+          { search_field: 'city', search_value: cityFilterValue },
+        ],
+      };
+
+      const opts = getLocationsQuery(1, 100, undefined, undefined, filterObj)();
+      const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchLocations(1, 100, undefined, undefined, filterObj);
+      const items = res?.data ?? [];
+      setManagedLocationOptions(items.map((location: any) => ({ value: location.id, label: location.name })));
+      return items.map((location: any) => ({ value: location.id, label: location.name }));
+    } catch {
+      setManagedLocationOptions([]);
+      return [];
+    }
+  }, [form, managedLocationOptions]);
+
+  const handleCountryChange = useCallback((field: AnyFieldApi) => (v: string | number) => {
+    field.handleChange(v);
+    form.setFieldValue("city", "");
+    form.setFieldValue("location", "");
+  }, [form]);
+
+  const handleCityChange = useCallback((field: AnyFieldApi) => (v: string | number) => {
+    field.handleChange(v);
+    form.setFieldValue("location", "");
+  }, [form]);
+
+  const handlePlaceSelect = useCallback((field: AnyFieldApi) => (lat: number, lng: number, address: string) => {
+    field.handleChange(address);
+    form.setFieldValue("latitude", lat);
+    form.setFieldValue("longitude", lng);
+  }, [form]);
 
   return (
     <React.Fragment>
@@ -321,41 +453,19 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               <div className="flex-1 grid grid-cols-3 gap-x-6 gap-y-4">
 
                 {/* Row 1: Name, Star Rating */}
-                <form.Field 
+                <form.Field
                   name="vendor"
                   children={(field: AnyFieldApi) => {
                     const apiErrors = validationErrors?.[field.name] ?? [];
                     return (
                       <FormFieldWrapper field={field} apiErrors={apiErrors} label="Vendor">
                         <SearchableSelect
-                        options={vendorOptions}
-                        value={field.state.value}
-                        onChange={(v) => field.handleChange(v)}
-                        placeholder="Select One"
-                        onSearch={async (q: string) => {
-                        try {
-                            
-                         let filterObj: SearchParams | undefined;
-                            if (q) {
-                            const parts = q.trim().split(' ');
-                            if (parts.length > 1) {
-                                filterObj = { filter: [ { search_field: 'first_name', search_value: parts[0] }, { search_field: 'last_name', search_value: parts[1] }, { search_field: 'user_type', search_value: 'vendor' } ] };
-                            } else {
-                                filterObj = { filter: [ { search_field: 'first_name', search_value: q }, { search_field: 'user_type', search_value: 'vendor' } ] };
-                            }
-                            } else {
-                            filterObj = { filter: [ { search_field: 'user_type', search_value: 'vendor' } ] };
-                            }
-                            const opts = getVendorsQuery(1, 5, undefined, undefined, filterObj)();
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchUsers(1, 5, undefined, undefined, filterObj);
-                            const items = res?.data ?? [];
-                            return items.map((c: any) => ({ value: c.id, label: c.first_name + ' ' + c.last_name }));
-                        } catch (err) {
-                            return [];
-                        }
-                        }}
-                    />
+                          options={vendorOptions}
+                          value={field.state.value}
+                          onChange={(v) => field.handleChange(v)}
+                          placeholder="Select One"
+                          onSearch={handleVendorSearch}
+                        />
                       </FormFieldWrapper>
                     );
                   }}
@@ -419,11 +529,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                         <FormFieldWrapper field={field} apiErrors={apiErrors} label="Address">
                           <AddressAutocomplete
                             onBlur={field.handleBlur}
-                            onPlaceSelect={(lat, lng, address) => {
-                              field.handleChange(address);
-                              form.setFieldValue("latitude", lat);
-                              form.setFieldValue("longitude", lng);
-                            }}
+                            onPlaceSelect={handlePlaceSelect(field)}
                             className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Search and select address..."
                           />
@@ -489,32 +595,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                         <SearchableSelect
                           options={managedCountryOptions}
                           value={field.state.value ?? ""}
-                          onChange={(v) => {
-                            field.handleChange(v);
-                            form.setFieldValue("city", "");
-                            form.setFieldValue("location", "");
-                          }}
+                          onChange={handleCountryChange(field)}
                           placeholder="Select One"
                           className="w-full"
-                          onSearch={async (q: string) => {
-                            try {
-                              let filterObj: SearchParams | undefined;
-                              if (q) {
-                                filterObj = { filter: [{ search_field: 'name', search_value: q }, { search_field: 'status', search_value: true }] };
-                              } else {
-                                filterObj = { filter: [{ search_field: 'status', search_value: true }] };
-                              }
-
-                              const opts = getCountriesQuery(1, 100, undefined, undefined, filterObj)();
-                              const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCountries(1, 100, undefined, undefined, filterObj);
-                              const items = res?.data ?? [];
-                              setManagedCountryOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
-                              return items.map((c: any) => ({ value: c.id, label: c.name }));
-                            } catch {
-                              setManagedCountryOptions([]);
-                              return [];
-                            }
-                          }}
+                          onSearch={handleCountrySearch}
                         />
                       </FormFieldWrapper>
                     );
@@ -531,36 +615,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                         <SearchableSelect
                           options={managedCityOptions}
                           value={field.state.value ?? ""}
-                          onChange={(v) => {
-                            field.handleChange(v);
-                            form.setFieldValue("location", "");
-                          }}
+                          onChange={handleCityChange(field)}
                           placeholder="Select One"
                           className="w-full"
-                          onSearch={async (q: string) => {
-                            try {
-                              const countryFilterValue = form.state.values.country;
-                              if (!countryFilterValue) {
-                                return [];
-                              }
-
-                              let filterObj: SearchParams | undefined;
-                              if (q) {
-                                filterObj = { filter: [{ search_field: 'name', search_value: q }, { search_field: 'country', search_value: countryFilterValue }] };
-                              } else {
-                                filterObj = { filter: [{ search_field: 'country', search_value: countryFilterValue }] };
-                              }
-
-                              const opts = getCitiesQuery(1, 100, undefined, undefined, filterObj)();
-                              const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchCities(1, 100, undefined, undefined, filterObj);
-                              const items = res?.data ?? [];
-                              setManagedCityOptions(items.map((c: any) => ({ value: c.id, label: c.name })));
-                              return items.map((c: any) => ({ value: c.id, label: c.name }));
-                            } catch {
-                              setManagedCityOptions([]);
-                              return [];
-                            }
-                          }}
+                          onSearch={handleCitySearch}
                         />
                       </FormFieldWrapper>
                     );
@@ -576,35 +634,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                         <SearchableSelect
                           options={managedLocationOptions}
                           value={field.state.value ?? ""}
-                          onChange={(v) => {
-                            field.handleChange(v);
-                          }}
+                          onChange={(v) => field.handleChange(v)}
                           placeholder="Select One"
                           className="w-full"
-                          onSearch={async (q: string) => {
-                            try {
-                              const cityFilterValue = form.state.values.city;
-                              if (!cityFilterValue) {
-                                return [];
-                              }
-
-                              let filterObj: SearchParams | undefined;
-                              if (q) {
-                                filterObj = { filter: [{ search_field: 'name', search_value: q }, { search_field: 'city', search_value: cityFilterValue }] };
-                              } else {
-                                filterObj = { filter: [{ search_field: 'city', search_value: cityFilterValue }] };
-                              }
-
-                              const opts = getLocationsQuery(1, 100, undefined, undefined, filterObj)();
-                              const res = opts && typeof opts.queryFn === 'function' ? await (opts.queryFn as any)() : await fetchLocations(1, 100, undefined, undefined, filterObj);
-                              const items = res?.data ?? [];
-                              setManagedLocationOptions(items.map((location: any) => ({ value: location.id, label: location.name })));
-                              return items.map((location: any) => ({ value: location.id, label: location.name }));
-                            } catch {
-                              setManagedLocationOptions([]);
-                              return [];
-                            }
-                          }}
+                          onSearch={handleLocationSearch}
                         />
                       </FormFieldWrapper>
                     );

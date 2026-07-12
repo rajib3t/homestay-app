@@ -22,39 +22,95 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ id, name, options =
   const [filtered, setFiltered] = React.useState<Option[]>(options);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
 
+  // Keep the latest onSearch/options in refs so the search effect below can
+  // read current values without needing them in its dependency array. If
+  // they were real deps, every time the parent passes a new function/array
+  // reference (which happens often with cascading selects) this effect
+  // would tear down and reschedule its debounce timer, re-firing onSearch
+  // with a stale query even though the user typed nothing new.
+  const onSearchRef = React.useRef(onSearch);
+  onSearchRef.current = onSearch;
+  const optionsRef = React.useRef(options);
+  optionsRef.current = options;
+
+  // Set to true right when the user picks an item from the dropdown. We use
+  // this to suppress the search effect that would otherwise fire because
+  // selecting an option also sets `query` to the option's label (so the
+  // input displays the selected text).
+  const suppressNextSearchRef = React.useRef(false);
+
+  // Set alongside suppressNextSearchRef when the user picks an item, so the
+  // value-sync effect below doesn't immediately stomp on the query we just
+  // set to the selected option's label.
+  const suppressNextValueSyncRef = React.useRef(false);
+
   React.useEffect(() => {
     setFiltered(options);
   }, [options]);
 
+  // Keep the displayed text in sync with the `value` prop when it changes
+  // for reasons other than the user picking something from this dropdown —
+  // e.g. a parent field (country) clearing this field (city/location) via
+  // form.setFieldValue("city", ""). Without this, the input keeps showing
+  // the previously selected label even though the underlying value is gone.
+  const prevValueRef = React.useRef(value);
   React.useEffect(() => {
-    if (onSearch) {
+    if (prevValueRef.current === value) return;
+    prevValueRef.current = value;
+
+    if (suppressNextValueSyncRef.current) {
+      suppressNextValueSyncRef.current = false;
+      return;
+    }
+
+    if (!value) {
+      setQuery("");
+      return;
+    }
+
+    const found = options.find((o) => String(o.value) === String(value));
+    setQuery(found ? found.label : "");
+  }, [value, options]);
+
+  React.useEffect(() => {
+    if (suppressNextSearchRef.current) {
+      suppressNextSearchRef.current = false;
+      return;
+    }
+
+    const activeOnSearch = onSearchRef.current;
+    const activeOptions = optionsRef.current;
+
+    if (activeOnSearch) {
       const q = query.trim().toLowerCase();
-      if (!q) {
-        setFiltered(options);
+      if (!q || q.length < 2) {
+        setFiltered(activeOptions);
         return;
       }
-      // Only search if query has at least 2 characters
-      if (q.length < 2) {
-        setFiltered(options);
-        return;
-      }
+
       let mounted = true;
-      let timerId: NodeJS.Timeout;
-      const timer = setTimeout(() => {
-        onSearch(query).then(res => {
-          if (mounted) setFiltered(res);
-        }).catch(() => {
-          if (mounted) setFiltered([]);
-        });
+      const timerId = setTimeout(() => {
+        activeOnSearch(query)
+          .then((res) => {
+            if (mounted) setFiltered(res);
+          })
+          .catch(() => {
+            if (mounted) setFiltered([]);
+          });
       }, 1000);
-      timerId = timer;
-      return () => { mounted = false; clearTimeout(timerId); };
+
+      return () => {
+        mounted = false;
+        clearTimeout(timerId);
+      };
     }
 
     const q = query.trim().toLowerCase();
-    if (!q) return setFiltered(options);
-    setFiltered(options.filter(o => o.label.toLowerCase().includes(q)));
-  }, [query, onSearch, options]);
+    if (!q) return setFiltered(activeOptions);
+    setFiltered(activeOptions.filter((o) => o.label.toLowerCase().includes(q)));
+    // Only real user-driven query changes should schedule a search.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
   React.useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -66,7 +122,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ id, name, options =
   }, []);
 
   const selectedLabel = React.useMemo(() => {
-    const found = options.find(o => String(o.value) === String(value));
+    const found = options.find((o) => String(o.value) === String(value));
     return found ? found.label : "";
   }, [options, value]);
 
@@ -77,8 +133,8 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ id, name, options =
         onClick={() => { setOpen(true); }}
       >
         <input
-          id={id }
-          name={name }
+          id={id}
+          name={name}
           className="flex-1 outline-none"
           placeholder={selectedLabel || placeholder}
           value={query}
@@ -93,13 +149,17 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ id, name, options =
           {filtered.length === 0 ? (
             <div className="p-2 text-sm text-gray-500">No results</div>
           ) : (
-            filtered.map(opt => (
+            filtered.map((opt) => (
               <div
                 key={String(opt.value)}
                 className="px-3 py-2 cursor-pointer hover:bg-gray-100"
-                onClick={() => { 
-                  
-                  onChange(String(opt.value)); setOpen(false); setQuery(opt.label); }}
+                onClick={() => {
+                  suppressNextSearchRef.current = true;
+                  suppressNextValueSyncRef.current = true;
+                  onChange(String(opt.value));
+                  setOpen(false);
+                  setQuery(opt.label);
+                }}
               >
                 {opt.label}
               </div>

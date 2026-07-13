@@ -11,7 +11,7 @@ interface FormFieldWrapperProps {
 }
 
 export function FormFieldWrapper({ field, label, children, apiErrors = [] }: FormFieldWrapperProps) {
-  const isInvalid = (field.state.meta.isTouched && !field.state.meta.isValid) || apiErrors.length > 0
+  const isInvalid = (field.state.meta.isTouched && !field.state.meta.isValid) || apiErrors.length > 0 || (!field.state.meta.isValid && field.state.meta.errors.length > 0)
 
   const errors = [
     ...field.state.meta.errors.map((error) => (error ? { message: String(error) } : undefined)),

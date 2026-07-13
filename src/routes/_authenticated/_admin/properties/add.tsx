@@ -7,9 +7,10 @@ import { useForm } from '@tanstack/react-form'
 import PropertyForm from '@/properties/components/form/form'
 import type { PropertyDTO } from '@/types/property'
 import { getVendorsQuery } from '@/vendors/queries';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import type { UserData } from '@/types/user';
 import { getCitiesQuery, getCountriesQuery, getLocationsQuery } from '@/locations/queries'
+import { createProperty } from '@/services/property'
 import { fetchCities, fetchCountries, fetchLocations } from '@/services/location'
 import type { SearchParams } from '@/types/common'
 import { useDebounce } from '@/hooks/use-debounce'
@@ -66,6 +67,9 @@ function RouteComponent() {
 
     const propertyForm = useForm({
         defaultValues: propertyFormInitialValues(),
+        onSubmit: async ({ value }) => {
+            createPropertyMutation.mutate(value);
+        },
     })
     
     const defaultFilter = [
@@ -118,6 +122,20 @@ function RouteComponent() {
         ...getBedTypesQuery(1, 100, '', '', { filter: roomTypeFilter })(),
         staleTime: 1000 * 60 * 5,
         refetchOnWindowFocus: false,
+    });
+
+    const createPropertyMutation = useMutation({
+        mutationFn: (data: PropertyDTO) => createProperty(data),
+        onSuccess: () => {
+            // Reset form after successful submission
+            propertyForm.reset();
+            // Handle success - e.g., redirect to properties list
+            console.log('Property created successfully');
+        },
+        onError: (error: any) => {
+            // Handle error
+            console.error('Error creating property:', error);
+        },
     });
 
     React.useEffect(() => {
@@ -181,6 +199,8 @@ function RouteComponent() {
             facilities={facilities}
             roomTypes={roomTypes}
             foodOptions={foodOptions}
+            isLoading={createPropertyMutation.isPending}
+            error={createPropertyMutation.error ? (createPropertyMutation.error as any)?.message || 'Failed to create property' : null}
         />
      </React.Fragment>
   )

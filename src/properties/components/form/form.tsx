@@ -30,6 +30,8 @@ interface PropertyFormProps {
   facilities?: { value: string | number; label: string }[];
   roomTypes?: { value: string | number; label: string }[];
   foodOptions?: { value: string | number; label: string }[];
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 const GOOGLE_MAPS_API_KEY = env.get("GOOGLE_MAPS_API_KEY") as string;
@@ -204,6 +206,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   facilities = [],
   roomTypes = [],
   foodOptions = [],
+  isLoading = false,
+  error = null,
 }) => {
   const [mainLogo, setMainLogo] = useState<string | null>(null);
   const [coverLogo, setCoverLogo] = useState<string | null>(null);
@@ -647,6 +651,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
             <div className={styles.fieldGrid}>
               <form.Field
                 name="vendor"
+                validators={{
+                  onChange: ({ value }) => (!value ? 'Vendor is required' : undefined),
+                  onSubmit: ({ value }) => (!value ? 'Vendor is required' : undefined),
+                }}
                 children={(field: AnyFieldApi) => {
                   const apiErrors = validationErrors?.[field.name] ?? [];
                   return (
@@ -677,6 +685,27 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                         onBlur={field.handleBlur}
                         className={styles.input}
                         placeholder="Property name"
+                      />
+                    </FormFieldWrapper>
+                  );
+                }}
+              />
+
+              <form.Field
+                name="description"
+                children={(field: AnyFieldApi) => {
+                  const apiErrors = validationErrors?.[field.name] ?? [];
+                  return (
+                    <FormFieldWrapper field={field} apiErrors={apiErrors} label="Description">
+                      <textarea
+                        id={field.name}
+                        name={field.name}
+                        value={field.state.value ?? ""}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        className={styles.input}
+                        placeholder="Property description"
+                        rows={4}
                       />
                     </FormFieldWrapper>
                   );
@@ -1225,6 +1254,22 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               }}
             />
           </FormSection>
+
+          {/* Submit Button */}
+          <div className="col-span-full mt-8 flex items-center justify-between gap-4">
+            {error && (
+              <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="ml-auto rounded-lg bg-blue-600 px-8 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-600 disabled:hover:shadow-sm"
+            >
+              {isLoading ? 'Creating Property...' : 'Create Property'}
+            </button>
+          </div>
         </form>
       </CardContent>
     </Card>

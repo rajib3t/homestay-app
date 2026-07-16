@@ -15,6 +15,7 @@ import { fetchCountries } from '@/services/location'
 import type { SearchParams } from '@/types/common'
 import { getAmenitiesQuery, getFacilitiesQuery, getBedTypesQuery } from '@/attributes/queries'
 import type { Amenity, BedType, Facility } from '@/types/attribute/index.'
+import { queryClient } from '@/lib/query-client'
 export const Route = createFileRoute('/_authenticated/_admin/properties/add')({
     head: () => ({
         title: "Add Property",
@@ -130,9 +131,10 @@ function RouteComponent() {
 
     const createPropertyMutation = useMutation({
         mutationFn: (data: PropertyDTO) => createProperty(data),
-        onSuccess: () => {
+        onSuccess: async () => {
             // Reset form after successful submission
             propertyForm.reset();
+            await queryClient.resetQueries({ queryKey: ["GET_PROPERTIES", 1, 5] })
             // Handle success - e.g., redirect to properties list
             console.log('Property created successfully');
         },

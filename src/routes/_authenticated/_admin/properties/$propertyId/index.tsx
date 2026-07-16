@@ -18,6 +18,7 @@ import { fetchCountries } from '@/services/location'
 import { parseValidationErrors } from '@/lib/utils'
 import { normalizePropertyPayload, updateProperty } from '@/services/property'
 import type { SearchParams } from '@/types/common'
+import { queryClient } from '@/lib/query-client'
 
 export const Route = createFileRoute('/_authenticated/_admin/properties/$propertyId/')({
   loader: async ({ params, context }) => {
@@ -143,6 +144,11 @@ function RouteComponent() {
 
   const updatePropertyMutation = useMutation({
     mutationFn: (data: PropertyDTO) => updateProperty(propertyId, data),
+    onMutate: async (updatedProperty: PropertyDTO) => {
+      if (!updatedProperty) return
+          await queryClient.resetQueries({ queryKey: ["GET_PROPERTIES", 1, 5] })
+           await queryClient.resetQueries({ queryKey: ["GET_PROPERTY_BY_ID", propertyId] })
+    },
   })
 
   React.useEffect(() => {

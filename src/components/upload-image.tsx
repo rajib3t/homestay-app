@@ -3,6 +3,7 @@ import { UploadCloudIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { env } from "@/lib/env";
 
 interface UploadImageProps {
   id: string;
@@ -35,6 +36,15 @@ const UploadImage: React.FC<UploadImageProps> = ({
   previewWrapperClassName,
   previewImageClassName,
 }) => {
+  const resolvedPreview = React.useMemo(() => {
+    if (!preview) return null;
+    if (/^(blob:|data:|https?:\/\/)/i.test(preview)) return preview;
+
+    const apiBaseUrl = env.getApiUrl().replace(/\/+$/, "");
+    const normalizedPath = preview.startsWith("/") ? preview : `/${preview}`;
+    return `${apiBaseUrl}${normalizedPath}`;
+  }, [preview]);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -69,9 +79,9 @@ const UploadImage: React.FC<UploadImageProps> = ({
           previewWrapperClassName
         )}
       >
-        {preview ? (
+        {resolvedPreview ? (
           <img
-            src={preview}
+            src={resolvedPreview}
             alt={alt}
             className={cn("h-full w-full object-cover", previewImageClassName)}
           />

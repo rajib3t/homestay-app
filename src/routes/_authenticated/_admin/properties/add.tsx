@@ -191,7 +191,7 @@ function RouteComponent() {
             addButton={true}
             addButtonType="link"
             addUrl="/properties"
-            icon= <List className="w-4 h-4" />
+            icon= {<List className="w-4 h-4" />}
             />
             
 

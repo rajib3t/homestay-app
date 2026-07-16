@@ -63,7 +63,7 @@ console.log('queryData', queryData);
             addButton={true}
             addButtonType="link"
             addUrl="/properties/add"
-            icon= <Plus className="w-4 h-4" />
+            icon= {<Plus className="w-4 h-4" />}
             />
 
         <PropertyList 

@@ -31,6 +31,7 @@ import { Route as authLayoutLoginRouteImport } from './routes/(auth)/_layout/log
 import { Route as AuthenticatedAdminVendorsIndexRouteImport } from './routes/_authenticated/_admin/vendors/index'
 import { Route as AuthenticatedAdminPropertiesIndexRouteImport } from './routes/_authenticated/_admin/properties/index'
 import { Route as AuthenticatedAdminPropertiesAddRouteImport } from './routes/_authenticated/_admin/properties/add'
+import { Route as AuthenticatedAdminPropertiesPropertyIdIndexRouteImport } from './routes/_authenticated/_admin/properties/$propertyId/index'
 import { Route as AuthenticatedAdminVendorsVendorIDEditRouteImport } from './routes/_authenticated/_admin/vendors/$vendorID/edit'
 
 const TestHeadRoute = TestHeadRouteImport.update({
@@ -150,6 +151,12 @@ const AuthenticatedAdminPropertiesAddRoute =
     path: '/properties/add',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminPropertiesPropertyIdIndexRoute =
+  AuthenticatedAdminPropertiesPropertyIdIndexRouteImport.update({
+    id: '/properties/$propertyId/',
+    path: '/properties/$propertyId/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminVendorsVendorIDEditRoute =
   AuthenticatedAdminVendorsVendorIDEditRouteImport.update({
     id: '/vendors/$vendorID/edit',
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/properties/': typeof AuthenticatedAdminPropertiesIndexRoute
   '/vendors/': typeof AuthenticatedAdminVendorsIndexRoute
   '/vendors/$vendorID/edit': typeof AuthenticatedAdminVendorsVendorIDEditRoute
+  '/properties/$propertyId/': typeof AuthenticatedAdminPropertiesPropertyIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof publicLayoutIndexRoute
@@ -198,6 +206,7 @@ export interface FileRoutesByTo {
   '/properties': typeof AuthenticatedAdminPropertiesIndexRoute
   '/vendors': typeof AuthenticatedAdminVendorsIndexRoute
   '/vendors/$vendorID/edit': typeof AuthenticatedAdminVendorsVendorIDEditRoute
+  '/properties/$propertyId': typeof AuthenticatedAdminPropertiesPropertyIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -224,6 +233,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/properties/': typeof AuthenticatedAdminPropertiesIndexRoute
   '/_authenticated/_admin/vendors/': typeof AuthenticatedAdminVendorsIndexRoute
   '/_authenticated/_admin/vendors/$vendorID/edit': typeof AuthenticatedAdminVendorsVendorIDEditRoute
+  '/_authenticated/_admin/properties/$propertyId/': typeof AuthenticatedAdminPropertiesPropertyIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/properties/'
     | '/vendors/'
     | '/vendors/$vendorID/edit'
+    | '/properties/$propertyId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/properties'
     | '/vendors'
     | '/vendors/$vendorID/edit'
+    | '/properties/$propertyId'
   id:
     | '__root__'
     | '/_authenticated'
@@ -293,6 +305,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/properties/'
     | '/_authenticated/_admin/vendors/'
     | '/_authenticated/_admin/vendors/$vendorID/edit'
+    | '/_authenticated/_admin/properties/$propertyId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -459,6 +472,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPropertiesAddRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/properties/$propertyId/': {
+      id: '/_authenticated/_admin/properties/$propertyId/'
+      path: '/properties/$propertyId'
+      fullPath: '/properties/$propertyId/'
+      preLoaderRoute: typeof AuthenticatedAdminPropertiesPropertyIdIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/vendors/$vendorID/edit': {
       id: '/_authenticated/_admin/vendors/$vendorID/edit'
       path: '/vendors/$vendorID/edit'
@@ -481,6 +501,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminPropertiesIndexRoute: typeof AuthenticatedAdminPropertiesIndexRoute
   AuthenticatedAdminVendorsIndexRoute: typeof AuthenticatedAdminVendorsIndexRoute
   AuthenticatedAdminVendorsVendorIDEditRoute: typeof AuthenticatedAdminVendorsVendorIDEditRoute
+  AuthenticatedAdminPropertiesPropertyIdIndexRoute: typeof AuthenticatedAdminPropertiesPropertyIdIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
@@ -497,6 +518,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminVendorsIndexRoute: AuthenticatedAdminVendorsIndexRoute,
   AuthenticatedAdminVendorsVendorIDEditRoute:
     AuthenticatedAdminVendorsVendorIDEditRoute,
+  AuthenticatedAdminPropertiesPropertyIdIndexRoute:
+    AuthenticatedAdminPropertiesPropertyIdIndexRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =

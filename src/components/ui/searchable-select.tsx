@@ -72,6 +72,16 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ id, name, options =
     setQuery(found ? found.label : "");
   }, [value, options]);
 
+  // When the component mounts with an existing value, we still want the
+  // visible input text to reflect that selection once the options arrive.
+  React.useEffect(() => {
+    if (!value) return;
+    if (query) return;
+
+    const found = options.find((o) => String(o.value) === String(value));
+    if (found) setQuery(found.label);
+  }, [value, options, query]);
+
   React.useEffect(() => {
     if (suppressNextSearchRef.current) {
       suppressNextSearchRef.current = false;

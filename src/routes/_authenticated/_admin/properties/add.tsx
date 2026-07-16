@@ -9,11 +9,10 @@ import type { PropertyDTO } from '@/types/property'
 import { getVendorsQuery } from '@/vendors/queries';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import type { UserData } from '@/types/user';
-import { getCitiesQuery, getCountriesQuery, getLocationsQuery } from '@/locations/queries'
-import { createProperty } from '@/services/property'
-import { fetchCities, fetchCountries, fetchLocations } from '@/services/location'
+import { getCountriesQuery } from '@/locations/queries'
+import { createProperty, normalizePropertyPayload } from '@/services/property'
+import { fetchCountries } from '@/services/location'
 import type { SearchParams } from '@/types/common'
-import { useDebounce } from '@/hooks/use-debounce'
 import { getAmenitiesQuery, getFacilitiesQuery, getBedTypesQuery } from '@/attributes/queries'
 import type { Amenity, BedType, Facility } from '@/types/attribute/index.'
 export const Route = createFileRoute('/_authenticated/_admin/properties/add')({
@@ -47,15 +46,20 @@ const propertyFormInitialValues = () : PropertyDTO => ({
     feature_image: '',
     cover_image: '',
     gallery_images: [],
-    food_options:[],
-    amenities:[],
-    facilities:[],
-    rooms:[],
-    trade_licence: '',
-    trade_licence_number: '',
+    food_options: [],
+    amenities: [],
+    facilities: [],
+    rooms: [],
+    trade_license: '',
+    trade_license_number: '',
     listing_price: 0,
     sale_price: 0,
     is_featured: false,
+    star_rating: '',
+    tax_name: '',
+    tax_percentage: 0,
+    check_in_time: '',
+    checkout_time: '',
 })
 function RouteComponent() {
     const [vendorOptions, setVendorOptions] = React.useState<{ value: string | number; label: string }[]>([])
@@ -68,7 +72,7 @@ function RouteComponent() {
     const propertyForm = useForm({
         defaultValues: propertyFormInitialValues(),
         onSubmit: async ({ value }) => {
-            createPropertyMutation.mutate(value);
+            createPropertyMutation.mutate(normalizePropertyPayload(value));
         },
     })
     

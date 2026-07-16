@@ -211,7 +211,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 }) => {
   const [mainLogo, setMainLogo] = useState<string | null>(null);
   const [coverLogo, setCoverLogo] = useState<string | null>(null);
-  const [tradeLicencePreview, setTradeLicencePreview] = useState<string | null>(null);
+  const [tradeLicensePreview, setTradeLicensePreview] = useState<string | null>(null);
   const [galleryImagesState, setGalleryImagesState] = useState<Record<number, string>>({});
   const [managedCountryOptions, setManagedCountryOptions] = useState(countryOptions);
   const [managedCityOptions, setManagedCityOptions] = useState<{ value: string | number; label: string }[]>([]);
@@ -619,9 +619,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               </div>
 
               <div>
-                <p className="mb-2 text-sm font-medium text-gray-900">Trade Licence (PDF/Image)</p>
+                <p className="mb-2 text-sm font-medium text-gray-900">Trade License (PDF/Image)</p>
                 <form.Field
-                  name="trade_licence"
+                  name="trade_license"
                   children={(field: AnyFieldApi) => {
                     const apiErrors = validationErrors?.[field.name] ?? [];
                     return (
@@ -629,13 +629,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                         <UploadImage
                           id={field.name}
                           name={field.name}
-                          preview={tradeLicencePreview}
-                          onPreviewChange={(preview) => setTradeLicencePreview(preview ?? "")}
+                          preview={tradeLicensePreview}
+                          onPreviewChange={(preview) => setTradeLicensePreview(preview ?? "")}
                           onValueChange={(value: string) => field.handleChange(value)}
                           onBlur={field.handleBlur}
                           accept="image/*,application/pdf"
-                          alt="Trade Licence"
-                          emptyText="Trade Licence Document"
+                          alt="Trade License"
+                          emptyText="Trade License Document"
                           buttonText="Upload Document"
                           previewWrapperClassName="h-[150px] w-full overflow-hidden rounded-lg border-2 border-dashed border-gray-300"
                           previewImageClassName="h-full w-full object-cover"
@@ -652,8 +652,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               <form.Field
                 name="vendor"
                 validators={{
-                  onChange: ({ value }) => (!value ? 'Vendor is required' : undefined),
-                  onSubmit: ({ value }) => (!value ? 'Vendor is required' : undefined),
+                  onChange: ({ value }: { value: string | number }) => (!value ? 'Vendor is required' : undefined),
+                  onSubmit: ({ value }: { value: string | number }) => (!value ? 'Vendor is required' : undefined),
                 }}
                 children={(field: AnyFieldApi) => {
                   const apiErrors = validationErrors?.[field.name] ?? [];
@@ -713,7 +713,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               />
 
               <form.Field
-                name="trade_licence_number"
+                name="trade_license_number"
                 children={(field: AnyFieldApi) => {
                   const apiErrors = validationErrors?.[field.name] ?? [];
                   return (
@@ -725,7 +725,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                         onChange={(e) => field.handleChange(e.target.value)}
                         onBlur={field.handleBlur}
                         className={styles.input}
-                        placeholder="Licence number"
+                        placeholder="License number"
                       />
                     </FormFieldWrapper>
                   );

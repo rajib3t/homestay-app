@@ -4,7 +4,7 @@ import type { PropertyListDTO } from "@/types/property";
 import type { PaginatedMeta } from "@/types/common"; // Update the path as needed
 import CommonTable from "@/components/common/common-table";
 import { TableCell } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 interface PropertyListProps {
   data: PropertyListDTO[];

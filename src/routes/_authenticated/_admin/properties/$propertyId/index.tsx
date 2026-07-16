@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import PropertiesHeader from '@/properties/components/header'
 import PropertyForm from '@/properties/components/form/form'
 import { getPropertyByIdQuery } from '@/properties/queries'
-import type { PropertyDTO } from '@/types/property'
+import type { PropertyDTO, PropertyResponseDTO } from '@/types/property'
 import { getVendorsQuery } from '@/vendors/queries'
 import { getAmenitiesQuery, getBedTypesQuery, getFacilitiesQuery } from '@/attributes/queries'
 import type { Amenity, BedType, Facility } from '@/types/attribute/index.'
@@ -40,7 +40,7 @@ export const Route = createFileRoute('/_authenticated/_admin/properties/$propert
   component: RouteComponent,
 })
 
-const getPropertyInitialValues = (property?: Partial<PropertyDTO>): PropertyDTO => ({
+const getPropertyInitialValues = (property?: Partial<PropertyResponseDTO>): PropertyDTO => ({
   vendor: property?.vendor ?? '',
   name: property?.name ?? '',
   description: property?.description ?? '',
@@ -219,6 +219,8 @@ function RouteComponent() {
         isLoading={updatePropertyMutation.isPending}
         validationErrors={validationErrors}
         error={updatePropertyMutation.error ? 'Failed to update property' : null}
+        buttonText="Update Property"
+        buttonTextLoading="Updating Property..."
       />
     </React.Fragment>
   )

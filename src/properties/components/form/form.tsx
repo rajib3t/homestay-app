@@ -32,9 +32,12 @@ interface PropertyFormProps {
   foodOptions?: { value: string | number; label: string }[];
   isLoading?: boolean;
   error?: string | null;
+  buttonText?: string;
+  buttonTextLoading?: string;
 }
 
 const GOOGLE_MAPS_API_KEY = env.get("GOOGLE_MAPS_API_KEY") as string;
+const API_BASE_URL = env.getApiUrl();
 
 /* -----------------------------------------------------------------------
  * Shared style tokens
@@ -78,6 +81,15 @@ const FormSection: React.FC<{ title: string; children: React.ReactNode; action?:
     {children}
   </section>
 );
+
+const resolveImagePreview = (value?: string | null) => {
+  if (!value) return null;
+  if (/^(blob:|data:|https?:\/\/)/i.test(value)) return value;
+
+  const normalizedBase = API_BASE_URL.replace(/\/+$/, "");
+  const normalizedPath = value.startsWith("/") ? value : `/${value}`;
+  return `${normalizedBase}${normalizedPath}`;
+};
 
 function useGooglePlacesScript() {
   const [loaded, setLoaded] = useState(() => !!window.google?.maps?.places);
@@ -208,6 +220,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   foodOptions = [],
   isLoading = false,
   error = null,
+  buttonText = "Submit",
+  buttonTextLoading = "Submitting...",
 }) => {
   const [mainLogo, setMainLogo] = useState<string | null>(null);
   const [coverLogo, setCoverLogo] = useState<string | null>(null);
@@ -229,6 +243,29 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
   useEffect(() => {
     setManagedCountryOptions(countryOptions);
   }, [countryOptions]);
+
+  useEffect(() => {
+    setMainLogo(resolveImagePreview(form.state.values.feature_image));
+  }, [form.state.values.feature_image]);
+
+  useEffect(() => {
+    setCoverLogo(resolveImagePreview(form.state.values.cover_image));
+  }, [form.state.values.cover_image]);
+
+  useEffect(() => {
+    setTradeLicensePreview(resolveImagePreview(form.state.values.trade_license));
+  }, [form.state.values.trade_license]);
+
+  useEffect(() => {
+    const nextGalleryState: Record<number, string> = {};
+    (form.state.values.gallery_images || []).forEach((image, index) => {
+      const resolved = resolveImagePreview(image);
+      if (resolved) {
+        nextGalleryState[index] = resolved;
+      }
+    });
+    setGalleryImagesState(nextGalleryState);
+  }, [form.state.values.gallery_images]);
 
   // Debounced effect for loading cities when country changes
   useEffect(() => {
@@ -1267,7 +1304,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
               disabled={isLoading}
               className="ml-auto rounded-lg bg-blue-600 px-8 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-600 disabled:hover:shadow-sm"
             >
-              {isLoading ? 'Creating Property...' : 'Create Property'}
+              {isLoading ? buttonTextLoading : buttonText || "Submit"}
             </button>
           </div>
         </form>

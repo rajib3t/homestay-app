@@ -205,8 +205,10 @@ function RouteComponent() {
             foodOptions={foodOptions}
             isLoading={createPropertyMutation.isPending}
             error={createPropertyMutation.error ? (createPropertyMutation.error as any)?.message || 'Failed to create property' : null}
+            buttonText="Create Property"
+            buttonTextLoading="Creating Property..."
         />
      </React.Fragment>
   )
 }
-
+ 

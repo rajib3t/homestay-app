@@ -136,11 +136,21 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ id, name, options =
     return found ? found.label : "";
   }, [options, value]);
 
+  const handleOpen = React.useCallback(() => {
+    // When a value is already selected, reopening the dropdown should show
+    // the full option list instead of keeping the previous search text.
+    if (value) {
+      setQuery("");
+      setFiltered(optionsRef.current);
+    }
+    setOpen(true);
+  }, [value]);
+
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <div
         className="w-full border rounded-md px-2 py-1 flex items-center gap-2 cursor-text"
-        onClick={() => { setOpen(true); }}
+        onClick={handleOpen}
       >
         <input
           id={id}

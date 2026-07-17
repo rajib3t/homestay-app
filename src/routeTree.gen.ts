@@ -26,6 +26,7 @@ import { Route as AuthenticatedAdminCitiesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminBedTypesRouteImport } from './routes/_authenticated/_admin/bed-types'
 import { Route as AuthenticatedAdminAppSettingRouteImport } from './routes/_authenticated/_admin/app-setting'
 import { Route as AuthenticatedAdminAmenitiesRouteImport } from './routes/_authenticated/_admin/amenities'
+import { Route as publicLayoutHomeRouteImport } from './routes/(public)/_layout/home'
 import { Route as publicLayoutAboutRouteImport } from './routes/(public)/_layout/about'
 import { Route as authLayoutLoginRouteImport } from './routes/(auth)/_layout/login'
 import { Route as AuthenticatedAdminVendorsIndexRouteImport } from './routes/_authenticated/_admin/vendors/index'
@@ -123,6 +124,11 @@ const AuthenticatedAdminAmenitiesRoute =
     path: '/amenities',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const publicLayoutHomeRoute = publicLayoutHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => publicLayoutRoute,
+} as any)
 const publicLayoutAboutRoute = publicLayoutAboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/login': typeof authLayoutLoginRoute
   '/about': typeof publicLayoutAboutRoute
+  '/home': typeof publicLayoutHomeRoute
   '/amenities': typeof AuthenticatedAdminAmenitiesRoute
   '/app-setting': typeof AuthenticatedAdminAppSettingRoute
   '/bed-types': typeof AuthenticatedAdminBedTypesRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/login': typeof authLayoutLoginRoute
   '/about': typeof publicLayoutAboutRoute
+  '/home': typeof publicLayoutHomeRoute
   '/amenities': typeof AuthenticatedAdminAmenitiesRoute
   '/app-setting': typeof AuthenticatedAdminAppSettingRoute
   '/bed-types': typeof AuthenticatedAdminBedTypesRoute
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/_authenticated/unauthorized': typeof AuthenticatedUnauthorizedRoute
   '/(auth)/_layout/login': typeof authLayoutLoginRoute
   '/(public)/_layout/about': typeof publicLayoutAboutRoute
+  '/(public)/_layout/home': typeof publicLayoutHomeRoute
   '/_authenticated/_admin/amenities': typeof AuthenticatedAdminAmenitiesRoute
   '/_authenticated/_admin/app-setting': typeof AuthenticatedAdminAppSettingRoute
   '/_authenticated/_admin/bed-types': typeof AuthenticatedAdminBedTypesRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/login'
     | '/about'
+    | '/home'
     | '/amenities'
     | '/app-setting'
     | '/bed-types'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/login'
     | '/about'
+    | '/home'
     | '/amenities'
     | '/app-setting'
     | '/bed-types'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/_authenticated/unauthorized'
     | '/(auth)/_layout/login'
     | '/(public)/_layout/about'
+    | '/(public)/_layout/home'
     | '/_authenticated/_admin/amenities'
     | '/_authenticated/_admin/app-setting'
     | '/_authenticated/_admin/bed-types'
@@ -437,6 +449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAmenitiesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/(public)/_layout/home': {
+      id: '/(public)/_layout/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof publicLayoutHomeRouteImport
+      parentRoute: typeof publicLayoutRoute
+    }
     '/(public)/_layout/about': {
       id: '/(public)/_layout/about'
       path: '/about'
@@ -557,11 +576,13 @@ const authLayoutRouteWithChildren = authLayoutRoute._addFileChildren(
 
 interface publicLayoutRouteChildren {
   publicLayoutAboutRoute: typeof publicLayoutAboutRoute
+  publicLayoutHomeRoute: typeof publicLayoutHomeRoute
   publicLayoutIndexRoute: typeof publicLayoutIndexRoute
 }
 
 const publicLayoutRouteChildren: publicLayoutRouteChildren = {
   publicLayoutAboutRoute: publicLayoutAboutRoute,
+  publicLayoutHomeRoute: publicLayoutHomeRoute,
   publicLayoutIndexRoute: publicLayoutIndexRoute,
 }
 

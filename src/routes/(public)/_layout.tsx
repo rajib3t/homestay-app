@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import * as React from 'react'
 import { Outlet } from '@tanstack/react-router'
-import  Header  from '../-component/public/header'
-import  Footer from '../-component/public/footer'
+// import  Header  from '../-component/public/header'
+// import  Footer from '../-component/public/footer'
 export const Route = createFileRoute('/(public)/_layout')({
   ssr: true,
   component: RouteComponent,
@@ -11,9 +11,9 @@ export const Route = createFileRoute('/(public)/_layout')({
 function RouteComponent() {
   return (
     <React.Fragment>
-        <Header />
+        {/* <Header /> */}
         <Outlet />
-        <Footer />
+        {/* <Footer /> */}
     </React.Fragment>
   )
 }

@@ -3,11 +3,9 @@ import { devtools } from '@tanstack/devtools-vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
-
+import { nitro } from 'nitro/vite'
 import { fileURLToPath, URL } from 'node:url'
 
-
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const port = env.VITE_PORT
@@ -16,48 +14,36 @@ export default defineConfig(({ mode }) => {
       ? parseInt(env.PORT, 10)
       : 3030
 
-
-
   return {
-    plugins: [
-      // Only enable devtools in development
-      mode === 'development' && devtools(),
-      tailwindcss(),
-      tanstackStart(),
-      viteReact(),
-    ].filter(Boolean),
+   plugins: [
+  mode === 'development' && devtools(),
+  tailwindcss(),
+  nitro({
+    preset: 'aws_amplify',
+    awsAmplify: { runtime: 'nodejs24.x' },
+  }),
+  tanstackStart(),
+  viteReact(),
+].filter(Boolean),
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
-        // Provide a browser-friendly implementation of the Node `events` module
-        // so Vite does not externalize it when dependencies import it.
         events: 'events',
       },
     },
-    // Ensure the browser `events` package is pre-bundled by Vite
     optimizeDeps: {
       include: ['events'],
     },
-    environments: {
-      ssr: {
-        build: {
-          rollupOptions: {
-            input: './server.ts',
-          },
-        },
-      },
-    },
+    // <-- environments.ssr block removed
     preview: {
       port,
     },
     server: {
       port,
       proxy: {
-        "/api/v1": env.VITE_API_BASE_URL
+        '/api/v1': env.VITE_API_BASE_URL,
       },
-      allowedHosts: [
-        'localhost', '127.0.0.1','homestays.local'],
-
+      allowedHosts: ['localhost', '127.0.0.1', 'homestays.local'],
     },
   }
 })

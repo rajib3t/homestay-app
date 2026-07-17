@@ -14,7 +14,8 @@ export const Route = createFileRoute('/_authenticated')({
      beforeLoad: async ({ location }) => {
       
         const auth = await isAuthenticated();
-       
+
+        console.log(auth)
         
         if (!auth) {
           throw redirect({
@@ -30,6 +31,10 @@ export const Route = createFileRoute('/_authenticated')({
         
     },
     loader: async () => {
+    // Skip on the server — the access token lives in browser localStorage.
+    // The client will hydrate and fetch the profile when needed.
+    if (typeof window === 'undefined') return
+
     await queryClient.ensureQueryData({
       queryKey: GET_PROFILE_KEY,
       queryFn: async () => {

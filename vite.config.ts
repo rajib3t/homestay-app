@@ -2,8 +2,8 @@ import { defineConfig, loadEnv } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 
-import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import { fileURLToPath, URL } from 'node:url'
 
 
@@ -22,12 +22,9 @@ export default defineConfig(({ mode }) => {
     plugins: [
       // Only enable devtools in development
       mode === 'development' && devtools(),
-      tanstackRouter({
-        target: 'react',
-        autoCodeSplitting: true,
-      }),
-      viteReact(),
       tailwindcss(),
+      tanstackStart(),
+      viteReact(),
     ].filter(Boolean),
     resolve: {
       alias: {
@@ -41,23 +38,14 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       include: ['events'],
     },
-    build: {
-      // Optimize build output
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom'],
-            'router-vendor': ['@tanstack/react-router'],
-            'query-vendor': ['@tanstack/react-query'],
+    environments: {
+      ssr: {
+        build: {
+          rollupOptions: {
+            input: './server.ts',
           },
         },
       },
-      // Increase chunk size warning limit
-      chunkSizeWarningLimit: 1000,
-      // Enable minification
-      minify: 'esbuild',
-      // Generate sourcemaps only in development
-      sourcemap: mode === 'development',
     },
     preview: {
       port,

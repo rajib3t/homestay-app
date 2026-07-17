@@ -13,6 +13,9 @@ export const ACCESS_TOKEN = 'access_token'
 export const REFRESH_TOKEN = 'refresh_token'
 export const REFRESH_ENDPOINT = '/auth/refresh'
 
+// SSR-safe check for browser environment
+const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined'
+
 export interface ApiError {
   message: string
   status: number
@@ -153,6 +156,13 @@ class ApiClient {
     originalRequest._retry = true
 
     // Get refresh token from localStorage
+    if (!isBrowser) {
+      this.clearAuth()
+      return Promise.reject({
+        ...apiError,
+        code: 'NO_REFRESH_TOKEN',
+      })
+    }
     const refreshToken = localStorage.getItem(REFRESH_TOKEN)
     if (!refreshToken) {
       this.clearAuth()
@@ -237,11 +247,13 @@ class ApiClient {
 
       // Update the auth token in memory and storage
       this.setAuthToken(newAccessToken)
-      localStorage.setItem(ACCESS_TOKEN, newAccessToken)
+      if (isBrowser) {
+        localStorage.setItem(ACCESS_TOKEN, newAccessToken)
 
-      // Update refresh token if a new one was provided (Token Rotation)
-      if (newRefreshToken) {
-        localStorage.setItem(REFRESH_TOKEN, newRefreshToken)
+        // Update refresh token if a new one was provided (Token Rotation)
+        if (newRefreshToken) {
+          localStorage.setItem(REFRESH_TOKEN, newRefreshToken)
+        }
       }
 
       return newAccessToken
@@ -272,6 +284,7 @@ class ApiClient {
   }
 
   public restoreAuthFromStorage() {
+    if (!isBrowser) return
     const token = localStorage.getItem(ACCESS_TOKEN)
     if (token) {
       this.setAuthToken(token)
@@ -283,8 +296,10 @@ class ApiClient {
     this.decodedUserId = null
     delete this.protectedApi.defaults.headers.Authorization
 
-    localStorage.removeItem(ACCESS_TOKEN)
-    localStorage.removeItem(REFRESH_TOKEN)
+    if (isBrowser) {
+      localStorage.removeItem(ACCESS_TOKEN)
+      localStorage.removeItem(REFRESH_TOKEN)
+    }
   }
 
   /* -------------------------------------------------------------------------- */
@@ -342,7 +357,7 @@ class ApiClient {
     data?: unknown,
     config?: AxiosRequestConfig
   ) {
-    
+
     return this.wrap(this.protectedApi.patch<T>(url, data, config))
   }
 
@@ -385,16 +400,19 @@ class ApiClient {
     delete this.protectedApi.defaults.headers.Authorization
     this.authToken = null
     this.decodedUserId = null
-    try {
-      localStorage.removeItem(ACCESS_TOKEN)
-      localStorage.removeItem(REFRESH_TOKEN)
-    } catch (e) {
+    if (isBrowser) {
+      try {
+        localStorage.removeItem(ACCESS_TOKEN)
+        localStorage.removeItem(REFRESH_TOKEN)
+      } catch (e) {
 
+      }
     }
   }
 
   // Method to get all cookies
   public getCookies(): Record<string, string> {
+    if (!isBrowser) return {}
     const cookies: Record<string, string> = {}
     document.cookie.split(';').forEach(cookie => {
       const [name, value] = cookie.trim().split('=')
@@ -409,6 +427,7 @@ class ApiClient {
 
   // Method to clear a cookie
   public clearCookie(name: string) {
+    if (!isBrowser) return
     document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
   }
 

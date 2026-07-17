@@ -111,7 +111,15 @@ export const refreshToken = async (): Promise<ApiResponse<RefreshTokenResponse>>
   }
 }
 
+// SSR-safe check for browser environment
+const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined'
+
 export const isAuthenticated = async (): Promise<boolean> => {
+  // During SSR, localStorage is not available.
+  // Return true to let the server pass through; the client will re-run
+  // beforeLoad on hydration and perform the real token check.
+  if (!isBrowser) return true
+
   try {
     const token = localStorage.getItem(ACCESS_TOKEN)
     return !!token && token.length > 0

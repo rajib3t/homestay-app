@@ -1,8 +1,10 @@
-import { Outlet, createRootRouteWithContext, useMatches } from '@tanstack/react-router'
-import { QueryClient } from '@tanstack/react-query'
-import React, { useLayoutEffect } from 'react'
+import { Outlet, createRootRouteWithContext, useMatches, HeadContent, Scripts } from '@tanstack/react-router'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import React, { useEffect } from 'react'
 import { Toaster } from "@/components/ui/sonner"
 import { useAtomValue } from 'jotai'
+import { queryClient as defaultQueryClient } from '@/lib/query-client'
+import appCss from '../styles.css?url'
 
 // Lazy load devtools only in development
 const TanStackRouterDevtools = import.meta.env.PROD
@@ -23,19 +25,34 @@ interface MyRouterContext {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  component: () => (
-    <React.Fragment>
-      <Meta>
-      <Outlet />
-      {!import.meta.env.PROD && (
-        <React.Suspense fallback={null}>
-          <TanStackRouterDevtools position="bottom-right" />
-        </React.Suspense>
-      )}
-      <Toaster  />
-      </Meta>
-    </React.Fragment>
-  ),
+  head: () => ({
+    links: [
+      { rel: 'stylesheet', href: appCss },
+    ],
+  }),
+  component: () => {
+    return (
+      <html lang="en">
+        <head>
+          <HeadContent />
+        </head>
+        <body>
+          <QueryClientProvider client={defaultQueryClient}>
+            <Meta>
+              <Outlet />
+              {!import.meta.env.PROD && (
+                <React.Suspense fallback={null}>
+                  <TanStackRouterDevtools position="bottom-right" />
+                </React.Suspense>
+              )}
+              <Toaster />
+            </Meta>
+          </QueryClientProvider>
+          <Scripts />
+        </body>
+      </html>
+    )
+  },
   notFoundComponent: () => (
     <ErrorView 
       statusCode="404"
@@ -107,7 +124,7 @@ function Meta({ children }: { children: React.ReactNode }) {
     return result
   }, [matches])
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!head) return
 
     // Title
@@ -171,7 +188,7 @@ function Meta({ children }: { children: React.ReactNode }) {
     }
   }, [head, appName])
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!favIcon) return
 
     // Update favicon dynamically from settings.

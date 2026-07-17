@@ -2,7 +2,7 @@
 
 import { createFileRoute } from '@tanstack/react-router'
 import { useAtomValue } from 'jotai'
-import { appLogo, appName } from '@/store/setting'
+import { whiteLogo, appName } from '@/store/setting'
 
 import { MapPin, ShieldCheck, Sparkles } from 'lucide-react'
 import { useComingSoonSetting } from '@/hooks/app-setting'
@@ -83,7 +83,7 @@ function CountdownBox({ label, value }: { label: string; value: string }) {
 }
 function RouteComponent() {
     const name = useAtomValue(appName)
-    const logo = useAtomValue(appLogo)
+    const logo = useAtomValue(whiteLogo)
     const { data, isLoading } = useComingSoonSetting()
       const [now, setNow] = useState(Date.now())
     

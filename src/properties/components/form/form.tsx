@@ -543,6 +543,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
                 </p>
                 <form.Field
                   name="feature_image"
+                  validators={{
+                    onChange: ({ value }: { value: string }) => (!value ? 'Feature image is required' : undefined),
+                    onSubmit: ({ value }: { value: string }) => (!value ? 'Feature image is required' : undefined),
+                  }}
                   children={(field: AnyFieldApi) => {
                     const apiErrors = validationErrors?.[field.name] ?? [];
                     return (
@@ -710,6 +714,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
               <form.Field
                 name="name"
+                validators={{
+                  onChange: ({ value }: { value: string }) => (!value ? 'Property name is required' : undefined),
+                  onSubmit: ({ value }: { value: string }) => (!value ? 'Property name is required' : undefined),
+                }}
                 children={(field: AnyFieldApi) => {
                   const apiErrors = validationErrors?.[field.name] ?? [];
                   return (
@@ -730,6 +738,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
               <form.Field
                 name="description"
+                validators={{
+                  onChange: ({ value }: { value: string }) => (!value ? 'Description is required' : undefined),
+                  onSubmit: ({ value }: { value: string }) => (!value ? 'Description is required' : undefined),
+                }}
                 children={(field: AnyFieldApi) => {
                   const apiErrors = validationErrors?.[field.name] ?? [];
                   return (
@@ -771,6 +783,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
               <form.Field
                 name="listing_price"
+                validators={{
+                  onChange: ({ value }: { value: number }) => (value <= 0 ? 'Listing price must be greater than 0' : undefined),
+                  onSubmit: ({ value }: { value: number }) => (value <= 0 ? 'Listing price must be greater than 0' : undefined),
+                }}
                 children={(field: AnyFieldApi) => {
                   const apiErrors = validationErrors?.[field.name] ?? [];
                   return (
@@ -861,6 +877,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
               <form.Field
                 name="address"
+                validators={{
+                  onChange: ({ value }: { value: string }) => (!value ? 'Address is required' : undefined),
+                  onSubmit: ({ value }: { value: string }) => (!value ? 'Address is required' : undefined),
+                }}
                 children={(field: AnyFieldApi) => {
                   const apiErrors = validationErrors?.[field.name] ?? [];
                   return (
@@ -926,6 +946,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
               <form.Field
                 name="country"
+                validators={{
+                  onChange: ({ value }: { value: string | number }) => (!value ? 'Country is required' : undefined),
+                  onSubmit: ({ value }: { value: string | number }) => (!value ? 'Country is required' : undefined),
+                }}
                 children={(field: AnyFieldApi) => {
                   const apiErrors = validationErrors?.[field.name] ?? [];
                   return (
@@ -945,6 +969,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
               <form.Field
                 name="city"
+                validators={{
+                  onChange: ({ value }: { value: string | number }) => (!value ? 'City is required' : undefined),
+                  onSubmit: ({ value }: { value: string | number }) => (!value ? 'City is required' : undefined),
+                }}
                 children={(field: AnyFieldApi) => {
                   const apiErrors = validationErrors?.[field.name] ?? [];
                   return (
@@ -964,6 +992,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
               <form.Field
                 name="location"
+                validators={{
+                  onChange: ({ value }: { value: string | number }) => (!value ? 'Location is required' : undefined),
+                  onSubmit: ({ value }: { value: string | number }) => (!value ? 'Location is required' : undefined),
+                }}
                 children={(field: AnyFieldApi) => {
                   const apiErrors = validationErrors?.[field.name] ?? [];
                   return (

@@ -12,8 +12,8 @@ import { toast } from 'sonner'
 import { CircleCheckIcon, OctagonXIcon } from 'lucide-react'
 import { useComingSoonSetting } from '@/hooks/app-setting'
 type ComingSoonSettingFormValues = {
-  video_url: string
-  background_image_url: string
+  video_url: File | null
+  background_image_url: File | null
   launch_date: string
 }
 
@@ -51,14 +51,9 @@ function FileUploadField({
     const file = event.target.files?.[0] ?? null
     if (!file) return
     onFileChange(file)
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      field.handleChange(result)
-      event.target.value = ''
-    }
-    reader.readAsDataURL(file)
+    // Don't convert to base64 - store file reference instead
+    field.handleChange(file)
+    event.target.value = ''
   }
 
   return (
@@ -127,22 +122,20 @@ function FileUploadField({
 
 function RouteComponent() {
   const { data: comingSoonSettingData } = useComingSoonSetting()
-  const [videoFile, setVideoFile] = useState<File | null>(null)
-  const [imageFile, setImageFile] = useState<File | null>(null)
   const [videoPreview, setVideoPreview] = useState<string | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const appComingSoonSettingForm = useForm({
     defaultValues: {
-      video_url: '',
-      background_image_url: '',
+      video_url: null,
+      background_image_url: null,
       launch_date: '',
     } satisfies ComingSoonSettingFormValues,
     onSubmit: async ({ value }) => {
       try {
         await settingService.postComingSoonSetting({
-          video_url: videoFile,
-          background_image_url: imageFile,
+          video_url: value.video_url,
+          background_image_url: value.background_image_url,
           launch_date: value.launch_date,
         })
 
@@ -162,13 +155,11 @@ function RouteComponent() {
   useEffect(() => {
     if (!comingSoonSettingData) return
 
-    setVideoFile(null)
-    setImageFile(null)
     setVideoPreview(toPreviewUrl(comingSoonSettingData.video_url))
     setImagePreview(toPreviewUrl(comingSoonSettingData.background_image_url))
     const nextValues = {
-      video_url: '',
-      background_image_url: '',
+      video_url: null,
+      background_image_url: null,
       launch_date: comingSoonSettingData.launch_date ?? '',
     }
 
@@ -205,9 +196,9 @@ function RouteComponent() {
             <appComingSoonSettingForm.Field
               name="video_url"
               validators={{
-                onChange: ({ value }: { value: string }) =>
-                  value && !/^https?:\/\/|^\/|^data:|^blob:/i.test(value)
-                    ? 'Enter a valid video URL or upload a file'
+                onChange: ({ value }: { value: File | null }) =>
+                  value && !(value instanceof File)
+                    ? 'Enter a valid video file or upload a file'
                     : undefined,
               }}
               children={(field: AnyFieldApi) => (
@@ -218,11 +209,9 @@ function RouteComponent() {
                   previewType="video"
                   preview={videoPreview}
                   onFileChange={(file) => {
-                    setVideoFile(file)
                     setVideoPreview(file ? URL.createObjectURL(file) : null)
                   }}
                   onClear={() => {
-                    setVideoFile(null)
                     setVideoPreview(null)
                   }}
                 />
@@ -232,9 +221,9 @@ function RouteComponent() {
             <appComingSoonSettingForm.Field
               name="background_image_url"
               validators={{
-                onChange: ({ value }: { value: string }) =>
-                  value && !/^https?:\/\/|^\/|^data:|^blob:/i.test(value)
-                    ? 'Enter a valid image URL or upload a file'
+                onChange: ({ value }: { value: File | null }) =>
+                  value && !(value instanceof File)
+                    ? 'Enter a valid image file or upload a file'
                     : undefined,
               }}
               children={(field: AnyFieldApi) => (
@@ -245,11 +234,9 @@ function RouteComponent() {
                   previewType="image"
                   preview={imagePreview}
                   onFileChange={(file) => {
-                    setImageFile(file)
                     setImagePreview(file ? URL.createObjectURL(file) : null)
                   }}
                   onClear={() => {
-                    setImageFile(null)
                     setImagePreview(null)
                   }}
                 />

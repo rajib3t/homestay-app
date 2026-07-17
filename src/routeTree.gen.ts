@@ -22,6 +22,7 @@ import { Route as publicLayoutIndexRouteImport } from './routes/(public)/_layout
 import { Route as AuthenticatedAdminLocationsRouteImport } from './routes/_authenticated/_admin/locations'
 import { Route as AuthenticatedAdminFacilityRouteImport } from './routes/_authenticated/_admin/facility'
 import { Route as AuthenticatedAdminCountriesRouteImport } from './routes/_authenticated/_admin/countries'
+import { Route as AuthenticatedAdminComingSoonSettingRouteImport } from './routes/_authenticated/_admin/coming-soon-setting'
 import { Route as AuthenticatedAdminCitiesRouteImport } from './routes/_authenticated/_admin/cities'
 import { Route as AuthenticatedAdminBedTypesRouteImport } from './routes/_authenticated/_admin/bed-types'
 import { Route as AuthenticatedAdminAppSettingRouteImport } from './routes/_authenticated/_admin/app-setting'
@@ -98,6 +99,12 @@ const AuthenticatedAdminCountriesRoute =
   AuthenticatedAdminCountriesRouteImport.update({
     id: '/countries',
     path: '/countries',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminComingSoonSettingRoute =
+  AuthenticatedAdminComingSoonSettingRouteImport.update({
+    id: '/coming-soon-setting',
+    path: '/coming-soon-setting',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminCitiesRoute =
@@ -184,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/app-setting': typeof AuthenticatedAdminAppSettingRoute
   '/bed-types': typeof AuthenticatedAdminBedTypesRoute
   '/cities': typeof AuthenticatedAdminCitiesRoute
+  '/coming-soon-setting': typeof AuthenticatedAdminComingSoonSettingRoute
   '/countries': typeof AuthenticatedAdminCountriesRoute
   '/facility': typeof AuthenticatedAdminFacilityRoute
   '/locations': typeof AuthenticatedAdminLocationsRoute
@@ -207,6 +215,7 @@ export interface FileRoutesByTo {
   '/app-setting': typeof AuthenticatedAdminAppSettingRoute
   '/bed-types': typeof AuthenticatedAdminBedTypesRoute
   '/cities': typeof AuthenticatedAdminCitiesRoute
+  '/coming-soon-setting': typeof AuthenticatedAdminComingSoonSettingRoute
   '/countries': typeof AuthenticatedAdminCountriesRoute
   '/facility': typeof AuthenticatedAdminFacilityRoute
   '/locations': typeof AuthenticatedAdminLocationsRoute
@@ -234,6 +243,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/app-setting': typeof AuthenticatedAdminAppSettingRoute
   '/_authenticated/_admin/bed-types': typeof AuthenticatedAdminBedTypesRoute
   '/_authenticated/_admin/cities': typeof AuthenticatedAdminCitiesRoute
+  '/_authenticated/_admin/coming-soon-setting': typeof AuthenticatedAdminComingSoonSettingRoute
   '/_authenticated/_admin/countries': typeof AuthenticatedAdminCountriesRoute
   '/_authenticated/_admin/facility': typeof AuthenticatedAdminFacilityRoute
   '/_authenticated/_admin/locations': typeof AuthenticatedAdminLocationsRoute
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/app-setting'
     | '/bed-types'
     | '/cities'
+    | '/coming-soon-setting'
     | '/countries'
     | '/facility'
     | '/locations'
@@ -283,6 +294,7 @@ export interface FileRouteTypes {
     | '/app-setting'
     | '/bed-types'
     | '/cities'
+    | '/coming-soon-setting'
     | '/countries'
     | '/facility'
     | '/locations'
@@ -309,6 +321,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/app-setting'
     | '/_authenticated/_admin/bed-types'
     | '/_authenticated/_admin/cities'
+    | '/_authenticated/_admin/coming-soon-setting'
     | '/_authenticated/_admin/countries'
     | '/_authenticated/_admin/facility'
     | '/_authenticated/_admin/locations'
@@ -421,6 +434,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCountriesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/coming-soon-setting': {
+      id: '/_authenticated/_admin/coming-soon-setting'
+      path: '/coming-soon-setting'
+      fullPath: '/coming-soon-setting'
+      preLoaderRoute: typeof AuthenticatedAdminComingSoonSettingRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/cities': {
       id: '/_authenticated/_admin/cities'
       path: '/cities'
@@ -513,6 +533,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAppSettingRoute: typeof AuthenticatedAdminAppSettingRoute
   AuthenticatedAdminBedTypesRoute: typeof AuthenticatedAdminBedTypesRoute
   AuthenticatedAdminCitiesRoute: typeof AuthenticatedAdminCitiesRoute
+  AuthenticatedAdminComingSoonSettingRoute: typeof AuthenticatedAdminComingSoonSettingRoute
   AuthenticatedAdminCountriesRoute: typeof AuthenticatedAdminCountriesRoute
   AuthenticatedAdminFacilityRoute: typeof AuthenticatedAdminFacilityRoute
   AuthenticatedAdminLocationsRoute: typeof AuthenticatedAdminLocationsRoute
@@ -528,6 +549,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAppSettingRoute: AuthenticatedAdminAppSettingRoute,
   AuthenticatedAdminBedTypesRoute: AuthenticatedAdminBedTypesRoute,
   AuthenticatedAdminCitiesRoute: AuthenticatedAdminCitiesRoute,
+  AuthenticatedAdminComingSoonSettingRoute:
+    AuthenticatedAdminComingSoonSettingRoute,
   AuthenticatedAdminCountriesRoute: AuthenticatedAdminCountriesRoute,
   AuthenticatedAdminFacilityRoute: AuthenticatedAdminFacilityRoute,
   AuthenticatedAdminLocationsRoute: AuthenticatedAdminLocationsRoute,

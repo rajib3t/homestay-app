@@ -7,6 +7,12 @@ import type {
   AppSettingUpdatePayload,
 } from '@/types/setting/app-setting'
 
+export type ComingSoonSetting = {
+  video_url: string | null
+  background_image_url: string | null
+  launch_date: string | null
+}
+
 const isNewImageUpload = (value: string | undefined) =>
   Boolean(value?.startsWith('data:'))
 
@@ -97,6 +103,53 @@ class SettingService {
     } catch (error) {
       const apiError = error as ApiError
       throw new Error(apiError.message ?? 'Failed to update setting')
+    }
+  }
+
+  async getComingSoonSetting<T = ComingSoonSetting>(): Promise<ApiResponse<T>> {
+    try {
+      const response = await this.readApi.get<ApiResponse<T>>(`/setting/coming-soon`)
+      return response.data
+    } catch (error) {
+      const apiError = error as ApiError
+      throw new Error(apiError.message ?? 'Failed to fetch coming soon setting')
+    }
+  }
+
+  async postComingSoonSetting(
+    value: {
+      background_image_url?: File | null
+      video_url?: File | null
+      launch_date: string
+    },
+  ): Promise<ApiResponse<ComingSoonSetting>> {
+    const payload = new FormData()
+
+    if (value.background_image_url instanceof File) {
+      payload.append('background_image_url', value.background_image_url)
+    }
+
+    if (value.video_url instanceof File) {
+      payload.append('video_url', value.video_url)
+    }
+
+    payload.append('launch_date', value.launch_date)
+
+    try {
+      const response = await this.writeApi.patch<ApiResponse<ComingSoonSetting>>(
+        `/setting/coming-soon`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Accept: 'application/json',
+          },
+        },
+      )
+      return response.data
+    } catch (error) {
+      const apiError = error as ApiError
+      throw new Error(apiError.message ?? 'Failed to update coming soon setting')
     }
   }
 }

@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { settingService } from '@/services/setting'
+import { settingService, type ComingSoonSetting } from '@/services/setting'
 
 import { useAtom } from 'jotai'
 import { useEffect } from 'react'
 import { appLogo, appName, dateFormat, favIcon, timeFormat, timeZone, whiteLogo } from '@/store/setting'
 export const GET_SETTING_KEY = ['GET_SETTING_KEY']
+export const GET_COMING_SOON_SETTING_KEY = ['GET_COMING_SOON_SETTING_KEY']
 export function useSetting(){
     const [,setAppName] = useAtom(appName)
     const [,setAppLogo] = useAtom(appLogo)
@@ -44,4 +45,18 @@ export function useSetting(){
     return query
 
 
+}
+
+export function useComingSoonSetting() {
+    return useQuery({
+        queryKey: GET_COMING_SOON_SETTING_KEY,
+        queryFn: async () => {
+            const resp = await settingService.getComingSoonSetting()
+            return resp.data as ComingSoonSetting
+        },
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+    })
 }

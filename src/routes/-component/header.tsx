@@ -156,8 +156,12 @@ export const Header: React.FC = () => {
                       <Link to="/app-setting" className="block px-4 py-2 text-sm hover:bg-accent" onClick={() => setMenuOpen(false)}>
                         App Setting
                       </Link>
-                  
+                      <Separator className="my-1" />
+                      <Link to="/coming-soon-setting" className="block px-4 py-2 text-sm hover:bg-accent" onClick={() => setMenuOpen(false)}>
+                        Coming Soon Setting
+                      </Link>
                     </React.Fragment>
+                    
                 )}
                
                 <Separator className="my-1" />

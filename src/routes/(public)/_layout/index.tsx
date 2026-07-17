@@ -1,10 +1,8 @@
-
-
 import { createFileRoute } from '@tanstack/react-router'
 import { useAtomValue } from 'jotai'
 import { whiteLogo, appName } from '@/store/setting'
 
-import { MapPin, ShieldCheck, Sparkles } from 'lucide-react'
+import { MapPin, ShieldCheck, Sparkles, Stamp } from 'lucide-react'
 import { useComingSoonSetting } from '@/hooks/app-setting'
 import { useEffect, useMemo, useState } from 'react'
 export const Route = createFileRoute('/(public)/_layout/')({
@@ -75,9 +73,13 @@ function formatCountdown(target: Date | null) {
 
 function CountdownBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-20 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-center backdrop-blur-md">
-      <div className="text-2xl font-semibold tracking-tight text-white md:text-3xl">{value}</div>
-      <div className="mt-1 text-[11px] uppercase tracking-[0.24em] text-white/55">{label}</div>
+    <div className="stub-cell flex min-w-[4.2rem] flex-col items-center">
+      <div className="font-mono text-3xl font-semibold tabular-nums tracking-tight text-primary-foreground md:text-4xl">
+        {value}
+      </div>
+      <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.32em] text-accent/90">
+        {label}
+      </div>
     </div>
   )
 }
@@ -112,7 +114,51 @@ function RouteComponent() {
         [media.countdownTarget, now],
       )
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
+    <div className="relative min-h-screen overflow-hidden bg-primary text-primary-foreground">
+      {/* signature-element styles: boarding-pass ticket + postcard chips, built on theme tokens */}
+      <style>{`
+        .ticket-stub {
+          position: relative;
+          background: color-mix(in oklch, var(--color-primary) 88%, black 12%);
+          border: 1px solid color-mix(in oklch, var(--color-primary-foreground) 18%, transparent);
+        }
+        .ticket-stub::before,
+        .ticket-stub::after {
+          content: "";
+          position: absolute;
+          width: 22px;
+          height: 22px;
+          border-radius: 9999px;
+          background: rgba(0, 0, 0, 0.28);
+          backdrop-filter: blur(6px);
+          border: 1px solid color-mix(in oklch, var(--color-primary-foreground) 18%, transparent);
+          top: 50%;
+          transform: translateY(-50%);
+        }
+        .ticket-stub::before { left: -11px; }
+        .ticket-stub::after { right: -11px; }
+        .ticket-divider {
+          border-left: 2px dashed color-mix(in oklch, var(--color-primary-foreground) 28%, transparent);
+        }
+        .stub-cell + .stub-cell {
+          border-left: 1px dashed color-mix(in oklch, var(--color-primary-foreground) 18%, transparent);
+          padding-left: 1rem;
+          margin-left: 0.25rem;
+        }
+        .postcard-chip {
+          position: relative;
+          border: 1px dashed var(--color-border);
+          transition: transform 200ms ease, border-color 200ms ease;
+        }
+        .postcard-chip:hover {
+          transform: rotate(-0.6deg) translateY(-2px);
+          border-color: color-mix(in oklch, var(--color-accent) 65%, transparent);
+        }
+        .stamp-badge {
+          transform: rotate(-9deg);
+        }
+      `}</style>
+
          {media.video ? (
            <video
              className="absolute inset-0 h-full w-full object-cover"
@@ -131,96 +177,104 @@ function RouteComponent() {
              className="absolute inset-0 h-full w-full object-cover"
            />
          ) : (
-           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_36%),linear-gradient(to_bottom,rgba(2,6,23,0.45),rgba(2,6,23,0.9))]" />
+           <div className="absolute inset-0 bg-gradient-to-b from-primary via-primary to-secondary" />
          )}
-   
-         <div className="absolute inset-0 bg-slate-950/55" />
-         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_36%),linear-gradient(to_bottom,rgba(2,6,23,0.25),rgba(2,6,23,0.8))]" />
-   
+
+         {/* brand-toned dusk overlay: primary teal deepening into secondary blue-teal */}
+         <div className="absolute inset-0 bg-primary/55" />
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,color-mix(in_oklch,var(--color-accent)_18%,transparent),transparent_40%),linear-gradient(to_bottom,color-mix(in_oklch,var(--color-primary)_30%,transparent),color-mix(in_oklch,var(--color-secondary)_88%,transparent))]" />
+
          <div className="relative z-10 flex min-h-screen items-center px-6 py-12">
            <div className="mx-auto grid w-full max-w-6xl gap-10 lg:grid-cols-[1.1fr_0.9fr]">
              <div className="flex flex-col justify-center">
-               <div className="mb-6 flex items-center gap-3">
-                 <img
-                   src={`${logo ?? '/logo.png'}`}
-                   alt="Homestay logo"
-                   className="h-12 w-12 rounded-2xl border border-white/15 bg-white/10 p-2 shadow-lg backdrop-blur-md"
-                 />
+               <div className="mb-8 flex items-center gap-4">
+                 <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-accent/50 bg-primary-foreground/12 shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                   <img
+                     src={`${logo ?? '/logo.png'}`}
+                     alt="Homestay logo"
+                     className="h-14 w-14 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
+                   />
+                 </div>
                  <div className="leading-tight">
-                   <p className="font-glitten text-lg text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
+                   <p className="font-glitten text-2xl text-primary-foreground drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
                       {name ?? 'Homestay'}
                    </p>
-                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-white/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
+                   <p className="font-mono text-xs uppercase tracking-[0.34em] text-accent">
                      Coming soon
                    </p>
                  </div>
                </div>
-   
-               <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium uppercase tracking-[0.2em] text-white/80 backdrop-blur-md">
-                 <Sparkles className="h-4 w-4" />
-                 {isLoading ? 'Loading launch details' : 'Launching soon'}
+
+               <div className="stamp-badge mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-accent/40 bg-primary/40 px-4 py-1.5 font-mono text-xs uppercase tracking-[0.22em] text-accent">
+                 <Stamp className="h-3.5 w-3.5" />
+                 {isLoading ? 'Loading launch details' : 'Reserved for you'}
                </div>
-   
-               <h1 className="font-glitten max-w-3xl text-5xl tracking-tight md:text-7xl">
+
+               <h1 className="font-valleki max-w-3xl text-5xl leading-[1.05] tracking-tight text-primary-foreground md:text-7xl">
                  Your next stay should feel unforgettable.
                </h1>
-   
-               <p className="mt-6 max-w-2xl text-lg leading-8 text-white/78 md:text-xl">
+
+               <p className="mt-6 max-w-2xl text-lg leading-8 text-primary-foreground/75 md:text-xl">
                  We are building a calmer, faster way to discover beautiful homestays with
                  memorable views, thoughtful hosts, and easy booking.
                </p>
-   
-               <div className="mt-8 flex flex-wrap gap-3 text-sm text-white/80">
-                 <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-md">
-                   <MapPin className="h-4 w-4" />
+
+               <div className="mt-8 flex flex-wrap gap-3 text-sm text-primary-foreground/85">
+                 <span className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/5 px-4 py-2">
+                   <MapPin className="h-4 w-4 text-accent" />
                    Curated destinations
                  </span>
-                 <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-md">
-                   <ShieldCheck className="h-4 w-4" />
+                 <span className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/5 px-4 py-2">
+                   <ShieldCheck className="h-4 w-4 text-accent" />
                    Trusted hosts
                  </span>
                  {media.launchDate ? (
-                   <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-md">
-                     <Sparkles className="h-4 w-4" />
+                   <span className="inline-flex items-center gap-2 rounded-full border border-accent/50 bg-accent/20 px-4 py-2 text-primary-foreground">
+                     <Sparkles className="h-4 w-4 text-accent" />
                      Launches on {media.launchDate}
                    </span>
                  ) : null}
                </div>
-   
-               <div className="mt-10 max-w-2xl rounded-[2rem] border border-white/15 bg-slate-950/35 p-5 shadow-2xl backdrop-blur-2xl">
-                 <div className="flex flex-wrap gap-3">
+
+               {/* signature element: boarding-pass style countdown ticket */}
+               <div className="ticket-stub mt-10 flex max-w-2xl items-stretch rounded-xl px-6 py-5 shadow-2xl">
+                 <div className="flex flex-1 flex-wrap items-center gap-1">
                    <CountdownBox label="Days" value={countdown.days} />
                    <CountdownBox label="Hours" value={countdown.hours} />
                    <CountdownBox label="Minutes" value={countdown.minutes} />
                    <CountdownBox label="Seconds" value={countdown.seconds} />
                  </div>
-                 <p className="mt-4 text-sm text-white/70">
-                   {countdown.finished
-                     ? 'We are live now.'
-                     : 'Counting down to the launch date from the backend.'}
-                 </p>
+                 <div className="ticket-divider ml-5 hidden flex-col justify-center pl-5 sm:flex">
+                   <p className="max-w-[9rem] text-xs leading-5 text-primary-foreground/60">
+                     {countdown.finished
+                       ? 'We are live now.'
+                       : 'Counting down to launch, straight from the backend.'}
+                   </p>
+                 </div>
                </div>
              </div>
-   
+
              <div className="flex items-end lg:justify-end">
-               <div className="w-full max-w-md rounded-[2rem] border border-white/15 bg-slate-950/35 p-6 shadow-2xl backdrop-blur-2xl md:p-8">
-                 <p className="text-sm uppercase tracking-[0.24em] text-white/55">What to expect</p>
+               <div className="w-full max-w-md rounded-xl border border-border bg-card/90 p-6 text-card-foreground shadow-2xl backdrop-blur-xl md:p-8">
+                 <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent-foreground/70">
+                   What to expect
+                 </p>
                  <div className="mt-6 space-y-4">
-                   <div className="rounded-2xl border border-white/10 bg-white/8 p-4">
-                     <p className="text-base font-medium">Stunning stays</p>
-                     <p className="mt-1 text-sm leading-6 text-white/65">
+                   <div className="postcard-chip rounded-lg bg-muted/40 p-4">
+                     <p className="font-valleki text-lg text-card-foreground">Stunning stays</p>
+                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
                        Handpicked homes and stays that feel personal, peaceful, and premium.
                      </p>
                    </div>
-                   <div className="rounded-2xl border border-white/10 bg-white/8 p-4">
-                     <p className="text-base font-medium">Simple booking</p>
-                     <p className="mt-1 text-sm leading-6 text-white/65">
+                   <div className="postcard-chip rounded-lg bg-muted/40 p-4">
+                     <p className="font-valleki text-lg text-card-foreground">Simple booking</p>
+                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
                        Clear pricing, smooth checkout, and a booking flow that stays out of your way.
                      </p>
                    </div>
-                   <div className="rounded-2xl border border-white/10 bg-white/8 p-4">
-                     <p className="text-base font-medium">Early access</p>
-                     <p className="mt-1 text-sm leading-6 text-white/65">
+                   <div className="postcard-chip rounded-lg bg-muted/40 p-4">
+                     <p className="font-valleki text-lg text-card-foreground">Early access</p>
+                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
                        Join the waitlist to be first in line when we launch.
                      </p>
                    </div>

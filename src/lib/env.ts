@@ -75,10 +75,9 @@ class Environment {
   }
 
   public getApiUrl(): string {
-    if (isProduction()) {
-      return this.config.VITE_API_BASE_URL
-    }
-    return this.config.API_URL
+    // Prefer an explicit API base URL, then fall back to the public API path.
+    // This keeps production from accidentally pointing at localhost.
+    return this.config.VITE_API_BASE_URL || this.config.API_URL || '/api/v1'
   }
 
   public getApiKey(): string {
